@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Dashboard - Utilizator Autentificat</h2>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.IsAuthenticated)
+                    {
+                        <div class="alert alert-success">
+                            <h4>✅ Autentificare reușită!</h4>
+                            <p>Bun venit pe dashboard! Ești autentificat cu succes.</p>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Informații utilizator:</h5>
+                                <ul class="list-group">
+                                    <li class="list-group-item">
+                                        <strong>ID:</strong> @ViewBag.UserId
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Email:</strong> @ViewBag.UserEmail
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Nume:</strong> @ViewBag.UserName
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Acțiuni disponibile:</h5>
+                                <div class="d-grid gap-2">
+                                    <a href="@Url.Action("GetUserInfo", "Dashboard")" class="btn btn-info" target="_blank">
+                                        Vezi informații JSON
+                                    </a>
+                                    <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
+                                        Înapoi la Home
+                                    </a>
+                                    <a href="@Url.Action("Profile", "Auth")" class="btn btn-primary">
+                                        Profil utilizator
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger">
+                            <h4>❌ Nu ești autentificat!</h4>
+                            <p>Nu ar trebui să vezi această pagină fără autentificare.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Testează endpoint-ul JSON
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/Dashboard/GetUserInfo')
+            .then(response => response.json())
+            .then(data => {
+                console.log('User Info:', data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
+</script>
