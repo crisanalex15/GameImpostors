@@ -44,7 +44,7 @@ const RegisterPage: React.FC = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5086/api/Auth/register",
+        "https://18.196.173.184:5087/api/Auth/register",
         {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -193,4 +193,3 @@ const RegisterPage: React.FC = () => {
 };
 
 export default RegisterPage;
-

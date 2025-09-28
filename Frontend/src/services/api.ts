@@ -8,7 +8,7 @@ import {
   ApiResponse,
 } from "../types/game";
 
-const API_BASE_URL = "http://localhost:5086/api";
+const API_BASE_URL = "https://18.196.173.184:5087/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
