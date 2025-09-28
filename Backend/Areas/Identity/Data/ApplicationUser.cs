@@ -6,9 +6,6 @@ namespace Backend.Areas.Identity.Data
     public class ApplicationUser : IdentityUser
     {
         [PersonalData]
-        public string Username { get; set; }
-
-        [PersonalData]
         public string? FirstName { get; set; }
 
         [PersonalData]

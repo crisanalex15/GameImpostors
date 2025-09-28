@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Backend.Areas.Identity.Data;
-using Backend.Data;
 using Microsoft.OpenApi.Models;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -38,16 +37,10 @@ namespace Backend
             // Ensure directory exists
             Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
 
-            // Add DbContext services
+            // Add DbContext service
             builder.Services.AddDbContext<AuthDbContext>(options =>
             {
                 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-                options.UseSqlite(connectionString);
-            });
-
-            builder.Services.AddDbContext<GameDbContext>(options =>
-            {
-                var connectionString = builder.Configuration.GetConnectionString("GameConnection");
                 options.UseSqlite(connectionString);
             });
 
@@ -84,11 +77,11 @@ namespace Backend
 
             builder.Services.AddRazorPages();
 
-            // Configurare Authentication - JWT pentru API, Cookie pentru web
+            // Configurare Authentication - Cookie pentru web, JWT pentru API
             builder.Services.AddAuthentication(options =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
                 options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
             })
             .AddJwtBearer(options =>
@@ -126,6 +119,8 @@ namespace Backend
             // Înregistrare serviciu AI
             builder.Services.AddHttpClient<AiService>();
             builder.Services.AddScoped<AiService>();
+
+            // Înregistrare serviciu Game
             builder.Services.AddScoped<IGameService, GameService>();
 
             // Add controllers with views
@@ -241,14 +236,6 @@ namespace Backend
                 defaults: new { controller = "Swagger", action = "Index" });
 
             app.MapRazorPages();
-
-            // Seed the database
-            using (var scope = app.Services.CreateScope())
-            {
-                var gameContext = scope.ServiceProvider.GetRequiredService<GameDbContext>();
-                gameContext.Database.EnsureCreated();
-                GameDbSeeder.SeedAll(gameContext);
-            }
 
             app.Run();
         }

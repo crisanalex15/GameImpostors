@@ -1,4 +1,4 @@
-using Backend.Data;
+using Backend.Areas.Identity.Data;
 using Backend.Models;
 using Backend.Models.Questions;
 using Microsoft.EntityFrameworkCore;
@@ -8,10 +8,10 @@ namespace Backend.Services.Game
 {
     public class GameService : IGameService
     {
-        private readonly GameDbContext _context;
+        private readonly AuthDbContext _context;
         private readonly Random _random;
 
-        public GameService(GameDbContext context)
+        public GameService(AuthDbContext context)
         {
             _context = context;
             _random = new Random();

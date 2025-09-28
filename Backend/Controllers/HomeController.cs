@@ -19,7 +19,6 @@ namespace Backend.Controllers
             _userManager = userManager;
         }
 
-        [Authorize]
         public IActionResult GetToApi()
         {
             return Redirect("~/swagger");
