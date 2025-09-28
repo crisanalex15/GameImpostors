@@ -10,7 +10,7 @@ namespace Backend.Controllers.API
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer,Identity.Application")]
     public class GameController : ControllerBase
     {
         private readonly IGameService _gameService;

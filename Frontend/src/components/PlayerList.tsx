@@ -5,12 +5,14 @@ interface PlayerListProps {
   players: PlayerResponse[];
   gameState: GameState;
   currentRound?: RoundResponse;
+  currentUserId?: string;
 }
 
 const PlayerList: React.FC<PlayerListProps> = ({
   players,
   gameState,
   currentRound,
+  currentUserId,
 }) => {
   const getPlayerStatus = (player: PlayerResponse) => {
     if (player.isEliminated) return "eliminated";
@@ -27,7 +29,10 @@ const PlayerList: React.FC<PlayerListProps> = ({
   };
 
   const getPlayerName = (player: PlayerResponse) => {
-    // În realitate, ai lua numele din context-ul utilizatorului
+    // Dacă e jucătorul curent, afișează "Tu"
+    if (currentUserId && player.userId === currentUserId) {
+      return "Tu";
+    }
     return `Jucător ${player.userId.slice(-4)}`;
   };
 

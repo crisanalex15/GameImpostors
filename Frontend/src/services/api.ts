@@ -8,7 +8,7 @@ import {
   ApiResponse,
 } from "../types/game";
 
-const API_BASE_URL = "http://localhost:5086/api";
+const API_BASE_URL = "http://81.181.70.241:5086/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -31,19 +31,19 @@ export const gameApi = {
   createGame: async (
     request: CreateGameRequest
   ): Promise<ApiResponse<GameStateResponse>> => {
-    const response = await api.post("/game/create", request);
+    const response = await api.post("/Game/create", request);
     return response.data;
   },
 
   joinGame: async (
     request: JoinGameRequest
   ): Promise<ApiResponse<GameStateResponse>> => {
-    const response = await api.post("/game/join", request);
+    const response = await api.post("/Game/join", request);
     return response.data;
   },
 
   leaveGame: async (gameId: string): Promise<{ message: string }> => {
-    const response = await api.post(`/game/${gameId}/leave`);
+    const response = await api.post(`/Game/${gameId}/leave`);
     return response.data;
   },
 
@@ -51,19 +51,19 @@ export const gameApi = {
     gameId: string,
     isReady: boolean
   ): Promise<ApiResponse<GameStateResponse>> => {
-    const response = await api.post(`/game/${gameId}/ready`, isReady);
+    const response = await api.post(`/Game/${gameId}/ready`, isReady);
     return response.data;
   },
 
   startGame: async (
     gameId: string
   ): Promise<ApiResponse<GameStateResponse>> => {
-    const response = await api.post(`/game/${gameId}/start`);
+    const response = await api.post(`/Game/${gameId}/start`);
     return response.data;
   },
 
   getGameState: async (gameId: string): Promise<GameStateResponse> => {
-    const response = await api.get(`/game/${gameId}`);
+    const response = await api.get(`/Game/${gameId}`);
     return response.data;
   },
 
@@ -72,7 +72,7 @@ export const gameApi = {
     roundId: string,
     request: SubmitAnswerRequest
   ): Promise<ApiResponse<GameStateResponse>> => {
-    const response = await api.post(`/game/round/${roundId}/answer`, request);
+    const response = await api.post(`/Game/round/${roundId}/answer`, request);
     return response.data;
   },
 
@@ -80,7 +80,7 @@ export const gameApi = {
     roundId: string,
     request: SubmitVoteRequest
   ): Promise<ApiResponse<GameStateResponse>> => {
-    const response = await api.post(`/game/round/${roundId}/vote`, request);
+    const response = await api.post(`/Game/round/${roundId}/vote`, request);
     return response.data;
   },
 };

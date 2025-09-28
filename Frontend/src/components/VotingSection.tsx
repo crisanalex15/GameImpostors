@@ -2,16 +2,18 @@ import React, { useState } from "react";
 import { RoundResponse, PlayerResponse } from "../types/game";
 import { gameApi } from "../services/api";
 
-interface VotingSectionProps {
+export interface VotingSectionProps {
   round: RoundResponse;
   players: PlayerResponse[];
   gameId: string;
+  currentUserId?: string;
   onVoteSubmitted: () => void;
 }
 
 const VotingSection: React.FC<VotingSectionProps> = ({
   round,
   players,
+  currentUserId,
   onVoteSubmitted,
 }) => {
   const [selectedPlayer, setSelectedPlayer] = useState("");
@@ -37,6 +39,11 @@ const VotingSection: React.FC<VotingSectionProps> = ({
   };
 
   const getPlayerName = (playerId: string) => {
+    // Găsește jucătorul în listă pentru a verifica dacă e utilizatorul curent
+    const player = players.find((p) => p.id === playerId);
+    if (currentUserId && player && player.userId === currentUserId) {
+      return "Tu";
+    }
     return `Jucător ${playerId.slice(-4)}`;
   };
 
@@ -46,7 +53,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({
   };
 
   const canVoteForPlayer = (player: PlayerResponse) => {
-    return !player.isEliminated && player.id !== "current-user-id"; // În realitate, ai verifica cu ID-ul curent
+    return !player.isEliminated && player.userId !== currentUserId;
   };
 
   const eligiblePlayers = players.filter(canVoteForPlayer);

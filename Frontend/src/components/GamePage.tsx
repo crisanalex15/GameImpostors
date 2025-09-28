@@ -5,10 +5,12 @@ import { GameStateResponse, GameState, RoundState } from "../types/game";
 import PlayerList from "./PlayerList";
 import RoundDisplay from "./RoundDisplay";
 import VotingSection from "./VotingSection";
+import { useAuth } from "../contexts/AuthContext";
 
 const GamePage: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [gameState, setGameState] = useState<GameStateResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -117,10 +119,10 @@ const GamePage: React.FC = () => {
     );
   }
 
-  const isHost = gameState.hostId === "current-user-id"; // În realitate, ai lua din context
+  const isHost = gameState.hostId === user?.id;
   const canStart =
     gameState.state === GameState.Lobby &&
-    gameState.players.length >= 3 &&
+    gameState.players.length >= 2 &&
     gameState.players.every((p) => p.isReady);
 
   return (
@@ -179,6 +181,7 @@ const GamePage: React.FC = () => {
           players={gameState.players}
           gameState={gameState.state}
           currentRound={gameState.currentRound}
+          currentUserId={user?.id}
         />
 
         {/* Current Round Display */}
@@ -197,6 +200,7 @@ const GamePage: React.FC = () => {
             round={gameState.currentRound}
             players={gameState.players}
             gameId={gameId!}
+            currentUserId={user?.id}
             onVoteSubmitted={loadGameState}
           />
         )}
