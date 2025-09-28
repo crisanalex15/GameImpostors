@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useAuth } from "../contexts/AuthContext";
+// import { useAuth } from "../contexts/AuthContext"; // Nu este folosit în RegisterPage
 
 const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +14,7 @@ const RegisterPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { login } = useAuth();
+  // const { login } = useAuth(); // Nu este folosit în RegisterPage
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -44,7 +44,7 @@ const RegisterPage: React.FC = () => {
 
     try {
       const response = await axios.post(
-        "https://18.196.173.184:5087/api/Auth/register",
+        "http://18.196.173.184:5086/api/Auth/register",
         {
           firstName: formData.firstName,
           lastName: formData.lastName,

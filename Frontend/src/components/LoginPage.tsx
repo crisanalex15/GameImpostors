@@ -18,7 +18,7 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await axios.post(
-        "https://18.196.173.184:5087/api/Auth/login",
+        "http://18.196.173.184:5086/api/Auth/login",
         {
           email,
           password,
