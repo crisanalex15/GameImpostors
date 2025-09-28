@@ -114,9 +114,20 @@ const LoginPage: React.FC = () => {
         <div style={{ textAlign: "center", marginTop: "20px", color: "#666" }}>
           <p>
             Nu ai cont?{" "}
-            <a href="#" style={{ color: "#667eea" }}>
-              Înregistrează-te
-            </a>
+            <button
+              type="button"
+              onClick={() => navigate("/register")}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#667eea",
+                textDecoration: "underline",
+                cursor: "pointer",
+                fontSize: "inherit",
+              }}
+            >
+              Înregistrează-te aici
+            </button>
           </p>
         </div>
       </div>

@@ -7,6 +7,7 @@ import {
 import LobbyPage from "./components/LobbyPage";
 import GamePage from "./components/GamePage";
 import LoginPage from "./components/LoginPage";
+import RegisterPage from "./components/RegisterPage";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import "./App.css";
 
@@ -18,6 +19,10 @@ function AppRoutes() {
       <Route
         path="/login"
         element={isAuthenticated ? <Navigate to="/lobby" /> : <LoginPage />}
+      />
+      <Route
+        path="/register"
+        element={isAuthenticated ? <Navigate to="/lobby" /> : <RegisterPage />}
       />
       <Route
         path="/lobby"
