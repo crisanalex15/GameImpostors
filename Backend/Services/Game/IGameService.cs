@@ -22,6 +22,7 @@ namespace Backend.Services.Game
         // Round Management
         Task<(bool Success, Round? Round, string Message)> CreateRoundAsync(Guid gameId);
         Task<Round?> GetCurrentRoundAsync(Guid gameId);
+        Task<Round?> GetRoundByIdAsync(Guid roundId);
         Task<(bool Success, string Message)> SubmitAnswerAsync(Guid roundId, Guid playerId, string answer);
         Task<List<Answer>> GetRoundAnswersAsync(Guid roundId);
 

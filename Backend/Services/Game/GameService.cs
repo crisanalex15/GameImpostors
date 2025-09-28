@@ -305,7 +305,7 @@ namespace Backend.Services.Game
                     ImpostorId = impostor.Id,
                     RoundNumber = game.RoundNumber,
                     State = Round.RoundState.Active,
-                    TimeLimit = game.TimerDuration,
+                    TimeLimit = 0, // No timer
                     StartedAt = DateTime.UtcNow
                 };
 
@@ -327,7 +327,7 @@ namespace Backend.Services.Game
                     }
                 }
 
-                round.StartTimer();
+                // No timer - players control the pace
                 _context.Rounds.Add(round);
                 await _context.SaveChangesAsync();
 
@@ -350,6 +350,17 @@ namespace Backend.Services.Game
                 .Where(r => r.GameId == gameId)
                 .OrderByDescending(r => r.RoundNumber)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<Round?> GetRoundByIdAsync(Guid roundId)
+        {
+            return await _context.Rounds
+                .Include(r => r.Game)
+                .Include(r => r.Question)
+                .Include(r => r.WordHidden)
+                .Include(r => r.Answers)
+                .Include(r => r.Votes)
+                .FirstOrDefaultAsync(r => r.Id == roundId);
         }
 
         public async Task<(bool Success, string Message)> SubmitAnswerAsync(Guid roundId, Guid playerId, string answer)
@@ -400,13 +411,17 @@ namespace Backend.Services.Game
                 await _context.SaveChangesAsync();
 
                 // Check if all players have answered
-                var totalPlayers = round.Game?.CurrentPlayers ?? 0;
-                var answersCount = await _context.Answers.CountAsync(a => a.RoundId == roundId);
-
-                if (answersCount >= totalPlayers)
+                var game = await GetGameAsync(round.GameId);
+                if (game != null)
                 {
-                    // Move to voting phase
-                    await StartVotingPhaseAsync(roundId);
+                    var activePlayers = game.Players.Where(p => !p.IsEliminated).Count();
+                    var answersCount = await _context.Answers.CountAsync(a => a.RoundId == roundId);
+
+                    if (answersCount >= activePlayers)
+                    {
+                        // Move to voting phase
+                        await StartVotingPhaseAsync(roundId);
+                    }
                 }
 
                 return (true, "Answer submitted successfully!");
@@ -493,6 +508,23 @@ namespace Backend.Services.Game
                 }
 
                 await _context.SaveChangesAsync();
+
+                // Check if majority has voted (more than half of active players)
+                var game = await GetGameAsync(round.GameId);
+                if (game != null)
+                {
+                    var activePlayers = game.Players.Where(p => !p.IsEliminated).Count();
+                    var votesCount = await _context.Votes.CountAsync(v => v.RoundId == roundId);
+                    var majorityNeeded = (activePlayers / 2) + 1;
+
+                    if (votesCount >= majorityNeeded)
+                    {
+                        // Calculate voting results and end round
+                        var (eliminatedPlayerId, isImpostorEliminated) = await CalculateVotingResultsAsync(roundId);
+                        await EndRoundAsync(roundId);
+                    }
+                }
+
                 return (true, "Vote submitted successfully!");
             }
             catch (Exception ex)
@@ -671,8 +703,11 @@ namespace Backend.Services.Game
                 player.IsImpostor = false;
             }
 
+            // Calculate random number of impostors (1-3, but not more than half the players)
+            var maxImpostors = Math.Min(3, players.Count / 2);
+            var impostorCount = _random.Next(1, maxImpostors + 1);
+            
             // Select random impostor(s)
-            var impostorCount = Math.Min(game.ImpostorCount, players.Count - 1);
             var selectedImpostors = players.OrderBy(x => _random.Next()).Take(impostorCount);
 
             foreach (var impostor in selectedImpostors)

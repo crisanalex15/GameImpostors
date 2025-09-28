@@ -18,7 +18,7 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await axios.post(
-        "http://18.196.173.184:5086/api/Auth/login",
+        "http://localhost:5086/api/Auth/login",
         {
           email,
           password,
@@ -51,7 +51,9 @@ const LoginPage: React.FC = () => {
     <div className="container">
       <div className="card" style={{ maxWidth: "400px", margin: "100px auto" }}>
         <div className="game-status">
-          <h1 style={{ color: "#333", marginBottom: "10px" }}>🎮 GameImpostors</h1>
+          <h1 style={{ color: "#333", marginBottom: "10px" }}>
+            🎮 GameImpostors
+          </h1>
           <p style={{ color: "#666", fontSize: "1.1rem" }}>Autentificare</p>
         </div>
 

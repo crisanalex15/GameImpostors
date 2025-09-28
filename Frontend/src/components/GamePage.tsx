@@ -77,7 +77,9 @@ const GamePage: React.FC = () => {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p style={{ color: "white", fontSize: "1.1rem" }}>Se încarcă jocul...</p>
+        <p style={{ color: "white", fontSize: "1.1rem" }}>
+          Se încarcă jocul...
+        </p>
       </div>
     );
   }
@@ -122,24 +124,26 @@ const GamePage: React.FC = () => {
   const isHost = gameState.hostId === user?.id;
   const canStart =
     gameState.state === GameState.Lobby &&
-    gameState.players.length >= 2 &&
+    gameState.players.length >= 3 &&
     gameState.players.every((p) => p.isReady);
 
   return (
     <div className="container">
-      <div className="card">
+      <div className="card" style={{ padding: "15px" }}>
         {/* Game Header */}
-        <div className="game-status">
-          <h1>🎮 GameImpostors</h1>
-          <p>
+        <div className="game-status" style={{ marginBottom: "15px" }}>
+          <h1 style={{ fontSize: "1.5rem", marginBottom: "5px" }}>
+            🎮 GameImpostors
+          </h1>
+          <p style={{ fontSize: "0.9rem", margin: "0" }}>
             {gameState.state === GameState.Lobby &&
               "Lobby - Așteaptă să înceapă jocul"}
             {gameState.state === GameState.Game &&
               `Runda ${gameState.roundNumber}/${gameState.maxRounds}`}
             {gameState.state === GameState.Ended && "Jocul s-a terminat"}
           </p>
-          <p>
-            Cod Lobby: <strong>{gameState.lobbyCode}</strong>
+          <p style={{ fontSize: "0.8rem", margin: "0" }}>
+            Cod: <strong>{gameState.lobbyCode}</strong>
           </p>
         </div>
 

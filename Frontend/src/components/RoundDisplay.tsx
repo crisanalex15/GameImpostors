@@ -16,27 +16,6 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
 }) => {
   const [answer, setAnswer] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(round.remainingTime);
-
-  useEffect(() => {
-    setTimeLeft(round.remainingTime);
-  }, [round.remainingTime]);
-
-  useEffect(() => {
-    if (round.state === RoundState.Active && timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            onStateUpdate(); // Refresh state when time runs out
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [round.state, timeLeft, onStateUpdate]);
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,11 +33,6 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
 
   const getRoundTitle = () => {
     switch (round.state) {
@@ -98,15 +72,7 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
         <p>Runda {round.roundNumber}</p>
       </div>
 
-      {/* Timer */}
-      {round.state === RoundState.Active && (
-        <div className="timer">
-          <div className="timer-value">{formatTime(timeLeft)}</div>
-          <p style={{ color: "rgba(255, 255, 255, 0.8)", margin: 0 }}>
-            Timp rămas
-          </p>
-        </div>
-      )}
+      {/* No timer - players control the pace */}
 
       {/* Game Content */}
       {round.state === RoundState.Active && getContent() && (

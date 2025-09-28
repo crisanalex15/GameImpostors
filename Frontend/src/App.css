@@ -9,13 +9,16 @@ body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
   color: #333;
 }
 
 .App {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* Loading styles */
@@ -51,16 +54,19 @@ body {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 10px;
+  height: calc(100vh - 80px);
+  overflow-y: auto;
 }
 
 .card {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 15px;
-  padding: 30px;
+  padding: 20px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 10px;
 }
 
 /* Button styles */

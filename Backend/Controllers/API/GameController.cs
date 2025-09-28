@@ -221,8 +221,8 @@ namespace Backend.Controllers.API
 
                 var userId = Guid.Parse(user.Id);
 
-                // Get player ID from round
-                var round = await _gameService.GetCurrentRoundAsync(roundId);
+                // Get round by ID first
+                var round = await _gameService.GetRoundByIdAsync(roundId);
                 if (round?.Game == null)
                 {
                     return BadRequest(new { message = "Round not found" });
@@ -267,8 +267,8 @@ namespace Backend.Controllers.API
 
                 var userId = Guid.Parse(user.Id);
 
-                // Get player ID from round
-                var round = await _gameService.GetCurrentRoundAsync(roundId);
+                // Get round by ID first
+                var round = await _gameService.GetRoundByIdAsync(roundId);
                 if (round?.Game == null)
                 {
                     return BadRequest(new { message = "Round not found" });
