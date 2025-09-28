@@ -24,13 +24,9 @@ namespace Backend
             {
                 options.AddPolicy("AllowSpecificOrigins", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173", "https://localhost:5173",
-                                      "http://localhost:5174", "https://localhost:5174",
-                                      "https://18.196.173.184:5173", "https://18.196.173.184:5174",
-                                      "http://18.196.173.184:5173", "http://18.196.173.184:5174")
+                    policy.AllowAnyOrigin()
                           .AllowAnyMethod()
-                          .AllowAnyHeader()
-                          .AllowCredentials();
+                          .AllowAnyHeader();
                 });
             });
 
