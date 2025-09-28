@@ -72,16 +72,11 @@ const LobbyPage: React.FC = () => {
             }}
           >
             <div>
-              <h1>🎮 GameImpostors</h1>
-              <p>Bine ai venit în lobby, {user?.firstName || user?.email}!</p>
+              <h1 style={{ color: "#333", marginBottom: "10px" }}>🎮 GameImpostors</h1>
+              <p style={{ color: "#666", fontSize: "1.1rem" }}>
+                Bine ai venit în lobby, <strong>{user?.firstName || user?.email}</strong>!
+              </p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="btn btn-secondary"
-              style={{ marginLeft: "20px" }}
-            >
-              Logout
-            </button>
           </div>
         </div>
 

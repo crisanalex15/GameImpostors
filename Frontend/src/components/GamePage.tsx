@@ -77,7 +77,7 @@ const GamePage: React.FC = () => {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Se încarcă jocul...</p>
+        <p style={{ color: "white", fontSize: "1.1rem" }}>Se încarcă jocul...</p>
       </div>
     );
   }

@@ -42,17 +42,17 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleDemoLogin = () => {
-    localStorage.setItem("authToken", "demo-token");
-    navigate("/lobby");
-  };
+  // const handleDemoLogin = () => {
+  //   localStorage.setItem("authToken", "demo-token");
+  //   navigate("/lobby");
+  // };
 
   return (
     <div className="container">
       <div className="card" style={{ maxWidth: "400px", margin: "100px auto" }}>
         <div className="game-status">
-          <h1>🎮 GameImpostors</h1>
-          <p>Autentificare</p>
+          <h1 style={{ color: "#333", marginBottom: "10px" }}>🎮 GameImpostors</h1>
+          <p style={{ color: "#666", fontSize: "1.1rem" }}>Autentificare</p>
         </div>
 
         <form onSubmit={handleLogin}>
@@ -99,15 +99,6 @@ const LoginPage: React.FC = () => {
             disabled={isLoading}
           >
             {isLoading ? "Se autentifică..." : "Autentificare"}
-          </button>
-
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{ width: "100%" }}
-            onClick={handleDemoLogin}
-          >
-            Demo Login (Fără autentificare)
           </button>
         </form>
 
