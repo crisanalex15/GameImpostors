@@ -24,6 +24,7 @@ namespace Backend.Controllers.API
 
         #region Lobby Management
 
+        // Create a new game
         [HttpPost("create")]
         public async Task<IActionResult> CreateGame([FromBody] CreateGameRequest request)
         {
@@ -61,6 +62,7 @@ namespace Backend.Controllers.API
             }
         }
 
+        // Join a game
         [HttpPost("join")]
         public async Task<IActionResult> JoinGame([FromBody] JoinGameRequest request)
         {
@@ -89,6 +91,7 @@ namespace Backend.Controllers.API
             }
         }
 
+        // Leave a game
         [HttpPost("{gameId}/leave")]
         public async Task<IActionResult> LeaveGame(Guid gameId)
         {
@@ -116,6 +119,7 @@ namespace Backend.Controllers.API
             }
         }
 
+        // Set a player ready
         [HttpPost("{gameId}/ready")]
         public async Task<IActionResult> SetReady(Guid gameId, [FromBody] bool isReady)
         {
@@ -144,6 +148,7 @@ namespace Backend.Controllers.API
             }
         }
 
+        // Start a game
         [HttpPost("{gameId}/start")]
         public async Task<IActionResult> StartGame(Guid gameId)
         {
@@ -176,6 +181,7 @@ namespace Backend.Controllers.API
 
         #region Game State
 
+        // Get the state of a game
         [HttpGet("{gameId}")]
         public async Task<IActionResult> GetGameState(Guid gameId)
         {
@@ -208,6 +214,7 @@ namespace Backend.Controllers.API
 
         #region Round Management
 
+        // Submit an answer
         [HttpPost("round/{roundId}/answer")]
         public async Task<IActionResult> SubmitAnswer(Guid roundId, [FromBody] SubmitAnswerRequest request)
         {
@@ -254,6 +261,7 @@ namespace Backend.Controllers.API
 
         #region Voting System
 
+        // Submit a vote
         [HttpPost("round/{roundId}/vote")]
         public async Task<IActionResult> SubmitVote(Guid roundId, [FromBody] SubmitVoteRequest request)
         {
@@ -300,6 +308,7 @@ namespace Backend.Controllers.API
 
         #region Private Helper Methods
 
+        // Build a game state response
         private async Task<GameStateResponse> BuildGameStateResponse(Guid gameId, Guid currentUserId)
         {
             var game = await _gameService.GetGameAsync(gameId);
@@ -347,6 +356,7 @@ namespace Backend.Controllers.API
             return response;
         }
 
+        // Build a round response
         private async Task<RoundResponse> BuildRoundResponse(Round round, Player? currentPlayer)
         {
             var answers = await _gameService.GetRoundAnswersAsync(round.Id);

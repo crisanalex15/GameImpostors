@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { RoundResponse, GameType, RoundState } from "../types/game";
 import { gameApi } from "../services/api";
 
@@ -32,7 +32,6 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
       setIsSubmitting(false);
     }
   };
-
 
   const getRoundTitle = () => {
     switch (round.state) {

@@ -24,30 +24,27 @@ const Header: React.FC = () => {
     <header className="header">
       <div className="header-content">
         <div className="header-left">
-          <h1 style={{ 
-            color: "#333", 
-            fontSize: "1.5rem", 
-            fontWeight: "bold",
-            margin: 0 
-          }}>
+          <h1
+            style={{
+              color: "#333",
+              fontSize: "1.2rem",
+              fontWeight: "bold",
+              margin: 0,
+            }}
+          >
             🎮 GameImpostors
           </h1>
         </div>
-        
+
         {user && (
           <div className="header-right">
             <div className="user-info">
               <div className="user-avatar">
                 {getInitials(`${user.firstName} ${user.lastName}`)}
               </div>
-              <span>
-                Bună, {user.firstName}!
-              </span>
+              <span>Bună, {user.firstName}!</span>
             </div>
-            <button 
-              className="logout-btn"
-              onClick={handleLogout}
-            >
+            <button className="logout-btn" onClick={handleLogout}>
               Logout
             </button>
           </div>

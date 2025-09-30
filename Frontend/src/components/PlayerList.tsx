@@ -38,7 +38,9 @@ const PlayerList: React.FC<PlayerListProps> = ({
 
   return (
     <div className="card">
-      <h2 style={{ marginBottom: "20px", textAlign: "center" }}>
+      <h2
+        style={{ marginBottom: "8px", textAlign: "center", fontSize: "1.1rem" }}
+      >
         Jucători ({players.length})
       </h2>
 
@@ -51,7 +53,7 @@ const PlayerList: React.FC<PlayerListProps> = ({
           return (
             <div key={player.id} className={`player-card ${status}`}>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "2rem", marginBottom: "10px" }}>
+                <div style={{ fontSize: "2rem", marginBottom: "5px" }}>
                   {icon}
                 </div>
                 <h3 style={{ marginBottom: "5px" }}>{name}</h3>
@@ -116,7 +118,7 @@ const PlayerList: React.FC<PlayerListProps> = ({
           style={{
             textAlign: "center",
             marginTop: "20px",
-            padding: "15px",
+            padding: "10px",
             background: "rgba(0, 0, 0, 0.05)",
             borderRadius: "8px",
           }}

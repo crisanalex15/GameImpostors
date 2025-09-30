@@ -154,7 +154,7 @@ const GamePage: React.FC = () => {
               <button
                 className={`btn ${isReady ? "btn-success" : "btn-primary"}`}
                 onClick={handleSetReady}
-                style={{ marginRight: "10px" }}
+                style={{ marginRight: "10px", marginBottom: "10px" }}
               >
                 {isReady ? "✓ Gata" : "Nu sunt gata"}
               </button>
@@ -170,14 +170,6 @@ const GamePage: React.FC = () => {
               )}
             </div>
           )}
-
-          <button
-            className="btn btn-danger"
-            onClick={handleLeaveGame}
-            style={{ marginTop: "10px" }}
-          >
-            Părăsește Jocul
-          </button>
         </div>
 
         {/* Players List */}
@@ -207,6 +199,15 @@ const GamePage: React.FC = () => {
             currentUserId={user?.id}
             onVoteSubmitted={loadGameState}
           />
+        )}
+        {!isReady && (
+          <button
+            className="btn btn-danger"
+            onClick={handleLeaveGame}
+            style={{ width: "100%" }}
+          >
+            Părăsește Jocul
+          </button>
         )}
       </div>
     </div>

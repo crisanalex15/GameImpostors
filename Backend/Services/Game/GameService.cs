@@ -706,7 +706,7 @@ namespace Backend.Services.Game
             // Calculate random number of impostors (1-3, but not more than half the players)
             var maxImpostors = Math.Min(3, players.Count / 2);
             var impostorCount = _random.Next(1, maxImpostors + 1);
-            
+
             // Select random impostor(s)
             var selectedImpostors = players.OrderBy(x => _random.Next()).Take(impostorCount);
 

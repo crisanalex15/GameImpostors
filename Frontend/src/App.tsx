@@ -25,7 +25,9 @@ function AppRoutes() {
         />
         <Route
           path="/register"
-          element={isAuthenticated ? <Navigate to="/lobby" /> : <RegisterPage />}
+          element={
+            isAuthenticated ? <Navigate to="/lobby" /> : <RegisterPage />
+          }
         />
         <Route
           path="/lobby"

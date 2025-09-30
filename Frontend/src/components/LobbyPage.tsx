@@ -72,9 +72,12 @@ const LobbyPage: React.FC = () => {
             }}
           >
             <div>
-              <h1 style={{ color: "#333", marginBottom: "10px" }}>🎮 GameImpostors</h1>
+              <h1 style={{ color: "#333", marginBottom: "10px" }}>
+                🎮 GameImpostors
+              </h1>
               <p style={{ color: "#666", fontSize: "1.1rem" }}>
-                Bine ai venit în lobby, <strong>{user?.firstName || user?.email}</strong>!
+                Bine ai venit în lobby,{" "}
+                <strong>{user?.firstName || user?.email}</strong>!
               </p>
             </div>
           </div>
@@ -152,6 +155,7 @@ const LobbyPage: React.FC = () => {
                     <option value={1}>1 impostor</option>
                     <option value={2}>2 impostori</option>
                     <option value={3}>3 impostori</option>
+                    <option value={4}>Random</option>
                   </select>
                 </div>
 
@@ -174,7 +178,7 @@ const LobbyPage: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="form-group">
+                {/* <div className="form-group">
                   <label className="form-label">Numărul de runde</label>
                   <select
                     className="form-select"
@@ -191,12 +195,11 @@ const LobbyPage: React.FC = () => {
                     <option value={3}>3 runde</option>
                     <option value={5}>5 runde</option>
                   </select>
-                </div>
+                </div> */}
 
                 <button
                   type="submit"
                   className="btn btn-success"
-                  style={{ width: "100%", marginBottom: "10px" }}
                   disabled={isLoading}
                 >
                   {isLoading ? "Se creează..." : "Creează Joc"}
@@ -205,7 +208,6 @@ const LobbyPage: React.FC = () => {
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  style={{ width: "100%" }}
                   onClick={() => setShowCreateForm(false)}
                 >
                   Anulează
@@ -215,62 +217,66 @@ const LobbyPage: React.FC = () => {
           </div>
 
           {/* Join Game */}
-          <div className="card">
-            <h2 style={{ marginBottom: "20px", textAlign: "center" }}>
-              Alătură-te la Joc
-            </h2>
-
-            {!showJoinForm ? (
-              <button
-                className="btn btn-primary"
-                style={{ width: "100%" }}
-                onClick={() => setShowJoinForm(true)}
-              >
+          {!showCreateForm && (
+            <div className="card">
+              <h2 style={{ marginBottom: "20px", textAlign: "center" }}>
                 Alătură-te la Joc
-              </button>
-            ) : (
-              <form onSubmit={handleJoinGame}>
-                <div className="form-group">
-                  <label className="form-label">Cod Lobby</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={lobbyCode}
-                    onChange={(e) => setLobbyCode(e.target.value.toUpperCase())}
-                    placeholder="Introdu codul lobby-ului"
-                    maxLength={6}
-                    style={{
-                      textAlign: "center",
-                      fontSize: "18px",
-                      letterSpacing: "2px",
-                    }}
-                    required
-                  />
-                </div>
+              </h2>
 
+              {!showJoinForm ? (
                 <button
-                  type="submit"
-                  className="btn btn-success"
-                  style={{ width: "100%", marginBottom: "10px" }}
-                  disabled={isLoading || lobbyCode.length !== 6}
-                >
-                  {isLoading ? "Se alătură..." : "Alătură-te"}
-                </button>
-
-                <button
-                  type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-primary"
                   style={{ width: "100%" }}
-                  onClick={() => {
-                    setShowJoinForm(false);
-                    setLobbyCode("");
-                  }}
+                  onClick={() => setShowJoinForm(true)}
                 >
-                  Anulează
+                  Alătură-te la Joc
                 </button>
-              </form>
-            )}
-          </div>
+              ) : (
+                <form onSubmit={handleJoinGame}>
+                  <div className="form-group">
+                    <label className="form-label">Cod Lobby</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={lobbyCode}
+                      onChange={(e) =>
+                        setLobbyCode(e.target.value.toUpperCase())
+                      }
+                      placeholder="Introdu codul lobby-ului"
+                      maxLength={6}
+                      style={{
+                        textAlign: "center",
+                        fontSize: "18px",
+                        letterSpacing: "2px",
+                      }}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-success"
+                    style={{ width: "100%", marginBottom: "10px" }}
+                    disabled={isLoading || lobbyCode.length !== 6}
+                  >
+                    {isLoading ? "Se alătură..." : "Alătură-te"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ width: "100%" }}
+                    onClick={() => {
+                      setShowJoinForm(false);
+                      setLobbyCode("");
+                    }}
+                  >
+                    Anulează
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
         </div>
 
         {error && (
@@ -288,12 +294,6 @@ const LobbyPage: React.FC = () => {
             {error}
           </div>
         )}
-
-        <div style={{ textAlign: "center", marginTop: "30px" }}>
-          <button className="btn btn-danger" onClick={handleLogout}>
-            Deconectare
-          </button>
-        </div>
       </div>
     </div>
   );

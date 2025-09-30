@@ -18,7 +18,7 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5086/api/Auth/login",
+        "http://localhost:5001/api/Auth/login",
         {
           email,
           password,
@@ -39,6 +39,19 @@ const LoginPage: React.FC = () => {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    const response = await axios.post("http://localhost:5001/api/Auth/google", {
+      email,
+    });
+
+    if (response.data.token) {
+      login(response.data.token, response.data.user);
+      navigate("/lobby");
+    } else {
+      setError("Token de autentificare lipsă");
     }
   };
 
@@ -101,6 +114,14 @@ const LoginPage: React.FC = () => {
             disabled={isLoading}
           >
             {isLoading ? "Se autentifică..." : "Autentificare"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ width: "100%" }}
+            onClick={handleGoogleLogin}
+          >
+            Autentifică-te cu Google
           </button>
         </form>
 

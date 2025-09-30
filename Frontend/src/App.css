@@ -12,6 +12,7 @@ body {
   max-height: 100vh;
   overflow: hidden;
   color: #333;
+  font-size: 14px;
 }
 
 .App {
@@ -52,32 +53,36 @@ body {
 
 /* Container styles */
 .container {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 10px;
-  height: calc(100vh - 80px);
+  padding: 8px;
+  height: calc(100vh - 60px);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .card {
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 /* Button styles */
 .btn {
-  padding: 12px 24px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   text-decoration: none;
   display: inline-block;
   text-align: center;
@@ -94,8 +99,14 @@ body {
 }
 
 .btn-secondary {
-  background: #6c757d;
+  width: 100%;
   color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  background: #6c757d;
 }
 
 .btn-secondary:hover {
@@ -104,12 +115,20 @@ body {
 }
 
 .btn-success {
-  background: #28a745;
+  width: 100%;
+  margin-bottom: 10px;
+  background-color: #aaff00a6;
   color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #6c757d;
 }
 
 .btn-success:hover {
-  background: #218838;
+  background: #9aee00;
   transform: translateY(-2px);
 }
 
@@ -177,17 +196,17 @@ body {
 }
 
 .grid-3 {
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 /* Player card styles */
 .player-card {
   background: white;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 2px solid transparent;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .player-card.ready {
@@ -210,15 +229,15 @@ body {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 15px 0;
-  margin-bottom: 20px;
+  padding: 8px 0;
+  margin-bottom: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -233,7 +252,7 @@ body {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
 }
 
 .user-info {
