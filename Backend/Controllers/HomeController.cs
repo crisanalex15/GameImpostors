@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Backend.Areas.Identity.Data;
 using Microsoft.AspNetCore.Identity;
-
+using Backend.Models.Questions;
 namespace Backend.Controllers
 {
     [Authorize]
@@ -12,16 +12,28 @@ namespace Backend.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
-
-        public HomeController(ILogger<HomeController> logger, UserManager<ApplicationUser> userManager)
+        private readonly AuthDbContext _context;
+        public HomeController(ILogger<HomeController> logger, UserManager<ApplicationUser> userManager, AuthDbContext context)
         {
             _logger = logger;
             _userManager = userManager;
+            _context = context;
         }
 
         public IActionResult GetToApi()
         {
             return Redirect("~/swagger");
+        }
+
+        public IActionResult Questions()
+        {
+            var QList = _context.Questions.ToList();
+            var WList = _context.WordHiddens.ToList();
+
+            ViewBag.QList = QList;
+            ViewBag.WList = WList;
+
+            return View();
         }
 
         public async Task<IActionResult> Index()
@@ -44,6 +56,12 @@ namespace Backend.Controllers
             ViewBag.CurrentUser = currentUser;
             ViewBag.UserRoles = userRoles;
             ViewBag.UserID = currentUser?.Id;
+
+            var QList = _context.Questions.ToList();
+            var WList = _context.WordHiddens.ToList();
+
+            ViewBag.QList = QList;
+            ViewBag.WList = WList;
 
             return View();
         }

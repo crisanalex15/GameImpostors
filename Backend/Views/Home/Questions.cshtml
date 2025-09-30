@@ -1,0 +1,416 @@
+@using Backend.Models.Questions
+@{
+    ViewData["Title"] = "Questions & Words Management";
+    var QList = ViewBag.QList as List<Question>;
+    var WList = ViewBag.WList as List<WordHidden>;
+}
+
+<style>
+    .dashboard-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 15px;
+        color: white;
+        transition: transform 0.3s ease;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        border-left: 4px solid #667eea;
+        margin-bottom: 2rem;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #667eea;
+    }
+    .welcome-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        color: white;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .btn-modern {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    .btn-add {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        border-radius: 25px;
+        padding: 10px 25px;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        color: white;
+    }
+    .btn-edit {
+        background: linear-gradient(45deg, #ffc107, #fd7e14);
+        border: none;
+        border-radius: 20px;
+        padding: 5px 15px;
+        color: white;
+        font-size: 0.8rem;
+        margin-right: 5px;
+    }
+    .btn-delete {
+        background: linear-gradient(45deg, #dc3545, #e83e8c);
+        border: none;
+        border-radius: 20px;
+        padding: 5px 15px;
+        color: white;
+        font-size: 0.8rem;
+    }
+    .table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+    }
+    .table td {
+        vertical-align: middle;
+        border-color: #f8f9fa;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="welcome-section">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-4 mb-3">Questions & Words Management</h1>
+                <p class="lead mb-0">Gestionează întrebările și cuvintele ascunse pentru joc</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="d-flex flex-column gap-2">
+                    <a asp-controller="Home" asp-action="Index" class="btn-modern">
+                        <i class="fas fa-arrow-left me-2"></i>Înapoi la Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions Table -->
+    <div class="table-container">
+        <div class="table-header">
+            <h3><i class="fas fa-question-circle me-2"></i>Întrebări (@QList?.Count ?? 0)</h3>
+            <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                <i class="fas fa-plus me-2"></i>Adaugă Întrebare
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Întrebare</th>
+                        <th>Întrebare Falsă</th>
+                        <th>Categorie</th>
+                        <th>Dificultate</th>
+                        <th>Review</th>
+                        <th>Count</th>
+                        <th>Activ</th>
+                        <th>Creat</th>
+                        <th>Acțiuni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (QList != null && QList.Any())
+                    {
+                        @foreach (var question in QList)
+                        {
+                            <tr>
+                                <td>@question.QuestionText</td>
+                                <td>@question.FakeQuestionText</td>
+                                <td><span class="badge bg-primary">@question.Category</span></td>
+                                <td><span class="badge bg-info">@question.Difficulty</span></td>
+                                <td>@question.PlayerReview</td>
+                                <td>@question.ReviewCount</td>
+                                <td>
+                                    @if (question.IsActive)
+                                    {
+                                        <span class="badge bg-success">Activ</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactiv</span>
+                                    }
+                                </td>
+                                <td>@question.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <button class="btn btn-edit">Edit</button>
+                                    <button class="btn btn-delete">Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">Nu există întrebări încă</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Word Hidden Table -->
+    <div class="table-container">
+        <div class="table-header">
+            <h3><i class="fas fa-eye-slash me-2"></i>Cuvinte Ascunse (@WList?.Count ?? 0)</h3>
+            <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addWordModal">
+                <i class="fas fa-plus me-2"></i>Adaugă Cuvânt
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Cuvânt</th>
+                        <th>Categorie</th>
+                        <th>Dificultate</th>
+                        <th>Activ</th>
+                        <th>Creat</th>
+                        <th>Acțiuni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (WList != null && WList.Any())
+                    {
+                        @foreach (var word in WList)
+                        {
+                            <tr>
+                                <td><strong>@word.Word</strong></td>
+                                <td><span class="badge bg-primary">@word.Category</span></td>
+                                <td><span class="badge bg-info">@word.Difficulty</span></td>
+                                <td>
+                                    @if (word.IsActive)
+                                    {
+                                        <span class="badge bg-success">Activ</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactiv</span>
+                                    }
+                                </td>
+                                <td>@word.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <button class="btn btn-edit">Edit</button>
+                                    <button class="btn btn-delete">Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Nu există cuvinte ascunse încă</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Question Modal -->
+<div class="modal fade" id="addQuestionModal" tabindex="-1" aria-labelledby="addQuestionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="addQuestionModalLabel">
+                    <i class="fas fa-plus me-2"></i>Adaugă Întrebare Nouă
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addQuestionForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="questionText" class="form-label">Întrebarea Principală</label>
+                            <textarea class="form-control" id="questionText" name="questionText" rows="3" required></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="fakeQuestionText" class="form-label">Întrebarea Falsă</label>
+                            <textarea class="form-control" id="fakeQuestionText" name="fakeQuestionText" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="category" class="form-label">Categorie</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Selectează categoria</option>
+                                <option value="General">General</option>
+                                <option value="Sport">Sport</option>
+                                <option value="Istorie">Istorie</option>
+                                <option value="Știință">Știință</option>
+                                <option value="Cultură">Cultură</option>
+                                <option value="Geografie">Geografie</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="difficulty" class="form-label">Dificultate</label>
+                            <select class="form-select" id="difficulty" name="difficulty" required>
+                                <option value="">Selectează dificultatea</option>
+                                <option value="Ușor">Ușor</option>
+                                <option value="Mediu">Mediu</option>
+                                <option value="Greu">Greu</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="isActive" class="form-label">Status</label>
+                            <select class="form-select" id="isActive" name="isActive">
+                                <option value="true">Activ</option>
+                                <option value="false">Inactiv</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
+                <button type="button" class="btn btn-success" onclick="addQuestion()">
+                    <i class="fas fa-save me-2"></i>Salvează Întrebarea
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Word Modal -->
+<div class="modal fade" id="addWordModal" tabindex="-1" aria-labelledby="addWordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="addWordModalLabel">
+                    <i class="fas fa-plus me-2"></i>Adaugă Cuvânt Ascuns
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addWordForm">
+                    <div class="mb-3">
+                        <label for="word" class="form-label">Cuvântul</label>
+                        <input type="text" class="form-control" id="word" name="word" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="wordCategory" class="form-label">Categorie</label>
+                            <select class="form-select" id="wordCategory" name="wordCategory" required>
+                                <option value="">Selectează categoria</option>
+                                <option value="General">General</option>
+                                <option value="Sport">Sport</option>
+                                <option value="Istorie">Istorie</option>
+                                <option value="Știință">Știință</option>
+                                <option value="Cultură">Cultură</option>
+                                <option value="Geografie">Geografie</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="wordDifficulty" class="form-label">Dificultate</label>
+                            <select class="form-select" id="wordDifficulty" name="wordDifficulty" required>
+                                <option value="">Selectează dificultatea</option>
+                                <option value="Ușor">Ușor</option>
+                                <option value="Mediu">Mediu</option>
+                                <option value="Greu">Greu</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="wordIsActive" class="form-label">Status</label>
+                        <select class="form-select" id="wordIsActive" name="wordIsActive">
+                            <option value="true">Activ</option>
+                            <option value="false">Inactiv</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
+                <button type="button" class="btn btn-success" onclick="addWord()">
+                    <i class="fas fa-save me-2"></i>Salvează Cuvântul
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function addQuestion() {
+        const form = document.getElementById('addQuestionForm');
+        const formData = new FormData(form);
+        
+        // Aici vei adăuga logica pentru salvarea întrebării
+        console.log('Adăugare întrebare:', Object.fromEntries(formData));
+        
+        // Pentru moment, doar închidem modalul
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addQuestionModal'));
+        modal.hide();
+        
+        // Resetăm formularul
+        form.reset();
+        
+        // Aici poți adăuga o notificare de succes
+        alert('Întrebarea a fost adăugată cu succes!');
+    }
+    
+    function addWord() {
+        const form = document.getElementById('addWordForm');
+        const formData = new FormData(form);
+        
+        // Aici vei adăuga logica pentru salvarea cuvântului
+        console.log('Adăugare cuvânt:', Object.fromEntries(formData));
+        
+        // Pentru moment, doar închidem modalul
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addWordModal'));
+        modal.hide();
+        
+        // Resetăm formularul
+        form.reset();
+        
+        // Aici poți adăuga o notificare de succes
+        alert('Cuvântul a fost adăugat cu succes!');
+    }
+</script>
