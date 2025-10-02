@@ -12,6 +12,10 @@ namespace Backend.Models.Questions
 
         [Required]
         [StringLength(100, MinimumLength = 3)]
+        public string NormalizedWord { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100, MinimumLength = 3)]
         public string FakeWord { get; set; } = "Impostor";
 
         [Required]
@@ -39,6 +43,7 @@ namespace Backend.Models.Questions
         public void UpdateWord(string word, string fakeWord, string category)
         {
             Word = word;
+            NormalizedWord = word.ToUpper();
             FakeWord = fakeWord;
             Category = category;
             UpdatedAt = DateTime.UtcNow;

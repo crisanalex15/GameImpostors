@@ -345,6 +345,9 @@ namespace Backend.Controllers.API
                 {
                     Id = p.Id,
                     UserId = p.UserId,
+                    UserName = p.User?.UserName,
+                    FirstName = p.User?.FirstName,
+                    Email = p.User?.Email,
                     IsImpostor = p.IsImpostor,
                     IsReady = p.IsReady,
                     IsEliminated = p.IsEliminated,

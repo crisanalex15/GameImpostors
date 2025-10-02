@@ -3,6 +3,7 @@ using System;
 using Backend.Areas.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251002213825_Normalized")]
+    partial class Normalized
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
@@ -176,7 +179,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("RoundId");
 
-                    b.ToTable("Answers", (string)null);
+                    b.ToTable("Answers");
                 });
 
             modelBuilder.Entity("Backend.Models.GameObject", b =>
@@ -251,7 +254,7 @@ namespace Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Games", (string)null);
+                    b.ToTable("Games");
                 });
 
             modelBuilder.Entity("Backend.Models.Player", b =>
@@ -296,7 +299,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("GameId");
 
-                    b.ToTable("Players", (string)null);
+                    b.ToTable("Players");
                 });
 
             modelBuilder.Entity("Backend.Models.Questions.Question", b =>
@@ -358,7 +361,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("PlayerReview");
 
-                    b.ToTable("Questions", (string)null);
+                    b.ToTable("Questions");
                 });
 
             modelBuilder.Entity("Backend.Models.Questions.WordHidden", b =>
@@ -425,7 +428,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("PlayerReview");
 
-                    b.ToTable("WordHiddens", (string)null);
+                    b.ToTable("WordHiddens");
                 });
 
             modelBuilder.Entity("Backend.Models.Round", b =>
@@ -490,7 +493,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("WordHiddenId");
 
-                    b.ToTable("Rounds", (string)null);
+                    b.ToTable("Rounds");
                 });
 
             modelBuilder.Entity("Backend.Models.Vote", b =>
@@ -525,7 +528,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("VoterId");
 
-                    b.ToTable("Votes", (string)null);
+                    b.ToTable("Votes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

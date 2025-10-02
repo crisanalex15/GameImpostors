@@ -3,6 +3,7 @@ using System;
 using Backend.Areas.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251002213041_AddGameInfo")]
+    partial class AddGameInfo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
@@ -114,6 +117,9 @@ namespace Backend.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Username")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("VerificationCode")
                         .HasColumnType("TEXT");
 
@@ -144,17 +150,12 @@ namespace Backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
-                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 38, 24, 996, DateTimeKind.Utc).AddTicks(3748));
+                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 30, 40, 574, DateTimeKind.Utc).AddTicks(9980));
 
                     b.Property<bool>("IsEdited")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(false);
-
-                    b.Property<string>("NormalizedValue")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
 
                     b.Property<Guid>("PlayerId")
                         .HasColumnType("TEXT");
@@ -176,7 +177,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("RoundId");
 
-                    b.ToTable("Answers", (string)null);
+                    b.ToTable("Answers");
                 });
 
             modelBuilder.Entity("Backend.Models.GameObject", b =>
@@ -188,7 +189,7 @@ namespace Backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
-                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 38, 24, 994, DateTimeKind.Utc).AddTicks(6991));
+                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 30, 40, 573, DateTimeKind.Utc).AddTicks(3463));
 
                     b.Property<int>("CurrentPlayers")
                         .ValueGeneratedOnAdd()
@@ -247,11 +248,11 @@ namespace Backend.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
-                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 38, 24, 994, DateTimeKind.Utc).AddTicks(7145));
+                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 30, 40, 573, DateTimeKind.Utc).AddTicks(3620));
 
                     b.HasKey("Id");
 
-                    b.ToTable("Games", (string)null);
+                    b.ToTable("Games");
                 });
 
             modelBuilder.Entity("Backend.Models.Player", b =>
@@ -279,7 +280,7 @@ namespace Backend.Migrations
                     b.Property<DateTime>("JoinedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
-                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 38, 24, 994, DateTimeKind.Utc).AddTicks(9285));
+                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 30, 40, 573, DateTimeKind.Utc).AddTicks(5696));
 
                     b.Property<DateTime?>("LeftAt")
                         .HasColumnType("TEXT");
@@ -296,7 +297,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("GameId");
 
-                    b.ToTable("Players", (string)null);
+                    b.ToTable("Players");
                 });
 
             modelBuilder.Entity("Backend.Models.Questions.Question", b =>
@@ -313,7 +314,7 @@ namespace Backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
-                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 38, 24, 996, DateTimeKind.Utc).AddTicks(5128));
+                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 30, 40, 575, DateTimeKind.Utc).AddTicks(1360));
 
                     b.Property<int>("Difficulty")
                         .ValueGeneratedOnAdd()
@@ -358,7 +359,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("PlayerReview");
 
-                    b.ToTable("Questions", (string)null);
+                    b.ToTable("Questions");
                 });
 
             modelBuilder.Entity("Backend.Models.Questions.WordHidden", b =>
@@ -375,7 +376,7 @@ namespace Backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
-                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 38, 24, 996, DateTimeKind.Utc).AddTicks(6308));
+                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 30, 40, 575, DateTimeKind.Utc).AddTicks(2562));
 
                     b.Property<int>("Difficulty")
                         .ValueGeneratedOnAdd()
@@ -391,11 +392,6 @@ namespace Backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(true);
-
-                    b.Property<string>("NormalizedWord")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
 
                     b.Property<int>("PlayerReview")
                         .ValueGeneratedOnAdd()
@@ -425,7 +421,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("PlayerReview");
 
-                    b.ToTable("WordHiddens", (string)null);
+                    b.ToTable("WordHiddens");
                 });
 
             modelBuilder.Entity("Backend.Models.Round", b =>
@@ -461,7 +457,7 @@ namespace Backend.Migrations
                     b.Property<DateTime>("StartedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
-                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 38, 24, 996, DateTimeKind.Utc).AddTicks(2524));
+                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 30, 40, 574, DateTimeKind.Utc).AddTicks(8805));
 
                     b.Property<int>("State")
                         .HasColumnType("INTEGER");
@@ -490,7 +486,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("WordHiddenId");
 
-                    b.ToTable("Rounds", (string)null);
+                    b.ToTable("Rounds");
                 });
 
             modelBuilder.Entity("Backend.Models.Vote", b =>
@@ -502,7 +498,7 @@ namespace Backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
-                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 38, 24, 996, DateTimeKind.Utc).AddTicks(4224));
+                        .HasDefaultValue(new DateTime(2025, 10, 2, 21, 30, 40, 575, DateTimeKind.Utc).AddTicks(438));
 
                     b.Property<string>("Reason")
                         .HasMaxLength(200)
@@ -525,7 +521,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("VoterId");
 
-                    b.ToTable("Votes", (string)null);
+                    b.ToTable("Votes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

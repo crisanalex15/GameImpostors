@@ -660,13 +660,12 @@ namespace Backend.Services.Game
 
         public async Task<bool> CheckGameEndConditionsAsync(Guid gameId)
         {
-            var players = await GetGamePlayersAsync(gameId);
-            var alivePlayers = players.Where(p => !p.IsEliminated).ToList();
-            var aliveImpostors = alivePlayers.Where(p => p.IsImpostor).ToList();
-            var aliveCrewmates = alivePlayers.Where(p => !p.IsImpostor).ToList();
+            var game = await GetGameAsync(gameId);
+            if (game == null) return false;
 
-            // Game ends if no impostors left or impostors equal/outnumber crewmates
-            return !aliveImpostors.Any() || aliveImpostors.Count() >= aliveCrewmates.Count();
+            // Game ends only when all rounds are completed
+            // The winner is determined by total points at the end
+            return game.RoundNumber > game.MaxRounds;
         }
 
         #endregion

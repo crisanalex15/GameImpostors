@@ -148,6 +148,7 @@ namespace Backend.Controllers.Auth
                     {
                         user.Id,
                         user.Email,
+                        user.UserName,
                         user.FirstName,
                         user.LastName,
                         user.IsEmailVerified

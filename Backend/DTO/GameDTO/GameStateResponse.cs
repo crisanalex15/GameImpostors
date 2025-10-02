@@ -25,6 +25,9 @@ namespace Backend.DTO.GameDTO
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
+        public string? UserName { get; set; }
+        public string? FirstName { get; set; }
+        public string? Email { get; set; }
         public bool IsImpostor { get; set; }
         public bool IsReady { get; set; }
         public bool IsEliminated { get; set; }

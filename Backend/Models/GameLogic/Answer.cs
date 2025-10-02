@@ -16,6 +16,10 @@ namespace Backend.Models
         [StringLength(500, MinimumLength = 1)]
         public string Value { get; set; } = string.Empty;
 
+        [Required]
+        [StringLength(100, MinimumLength = 3)]
+        public string NormalizedValue { get; set; } = string.Empty;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
@@ -32,6 +36,7 @@ namespace Backend.Models
             Value = newValue;
             UpdatedAt = DateTime.UtcNow;
             IsEdited = true;
+            NormalizedValue = newValue.ToUpper();
         }
     }
 }

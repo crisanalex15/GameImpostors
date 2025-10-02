@@ -12,6 +12,9 @@ namespace Backend.Areas.Identity.Data
         public string? LastName { get; set; }
 
         [PersonalData]
+        public string? Username { get; set; }
+
+        [PersonalData]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [PersonalData]
@@ -49,6 +52,15 @@ namespace Backend.Areas.Identity.Data
 
         [PersonalData]
         public int AccessFailedCountPasswordReset { get; set; }
+
+        [PersonalData]
+        public int TotalGamesPlayed { get; set; }
+
+        [PersonalData]
+        public int TotalGamesWon { get; set; }
+
+        [PersonalData]
+        public int TotalScore { get; set; }
 
 
         public void UpdateLastModified()

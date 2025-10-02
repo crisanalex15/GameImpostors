@@ -106,6 +106,11 @@ public class AuthDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(p => p.JoinedAt).HasDefaultValue(DateTime.UtcNow);
 
             // Relationships
+            entity.HasOne(p => p.User)
+                  .WithMany()
+                  .HasForeignKey(p => p.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasMany(p => p.Answers)
                   .WithOne(a => a.Player)
                   .HasForeignKey(a => a.PlayerId)

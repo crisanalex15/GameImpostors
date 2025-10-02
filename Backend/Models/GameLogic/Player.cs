@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Backend.Areas.Identity.Data;
 
 namespace Backend.Models
 {
@@ -26,6 +27,7 @@ namespace Backend.Models
 
         // Navigation properties
         public GameObject? Game { get; set; }
+        public ApplicationUser? User { get; set; }
         public List<Answer> Answers { get; set; } = new();
         public List<Vote> Votes { get; set; } = new();
         public List<Vote> VotesReceived { get; set; } = new();
