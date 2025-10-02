@@ -11,7 +11,7 @@ const LobbyPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, setCurrentGameId } = useAuth();
 
   const [createGameData, setCreateGameData] = useState<CreateGameRequest>({
     gameType: GameType.WordHidden,
@@ -29,6 +29,7 @@ const LobbyPage: React.FC = () => {
     try {
       const response = await gameApi.createGame(createGameData);
       if (response.game) {
+        setCurrentGameId(response.game.id); // Setează gameId-ul în context
         navigate(`/game/${response.game.id}`);
       }
     } catch (err: any) {
@@ -46,6 +47,7 @@ const LobbyPage: React.FC = () => {
     try {
       const response = await gameApi.joinGame({ lobbyCode });
       if (response.game) {
+        setCurrentGameId(response.game.id); // Setează gameId-ul în context
         navigate(`/game/${response.game.id}`);
       }
     } catch (err: any) {
@@ -53,11 +55,6 @@ const LobbyPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
   };
 
   return (
@@ -93,13 +90,29 @@ const LobbyPage: React.FC = () => {
             {!showCreateForm ? (
               <button
                 className="btn btn-primary"
-                style={{ width: "100%" }}
+                style={{
+                  width: "100%",
+                  transition: "all 0.3s ease",
+                  transform: "scale(1)",
+                }}
                 onClick={() => setShowCreateForm(true)}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.transform = "scale(1.02)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.transform = "scale(1)")
+                }
               >
                 Creează Joc
               </button>
             ) : (
-              <form onSubmit={handleCreateGame}>
+              <form
+                onSubmit={handleCreateGame}
+                className="fade-in"
+                style={{
+                  animation: "slideIn 0.4s ease-out",
+                }}
+              >
                 <div className="form-group">
                   <label className="form-label">Tip Joc</label>
                   <select
@@ -208,7 +221,17 @@ const LobbyPage: React.FC = () => {
                 <button
                   type="button"
                   className="btn btn-secondary"
+                  style={{
+                    transition: "all 0.3s ease",
+                    transform: "scale(1)",
+                  }}
                   onClick={() => setShowCreateForm(false)}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "scale(1.02)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                  }
                 >
                   Anulează
                 </button>
@@ -226,13 +249,29 @@ const LobbyPage: React.FC = () => {
               {!showJoinForm ? (
                 <button
                   className="btn btn-primary"
-                  style={{ width: "100%" }}
+                  style={{
+                    width: "100%",
+                    transition: "all 0.3s ease",
+                    transform: "scale(1)",
+                  }}
                   onClick={() => setShowJoinForm(true)}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "scale(1.02)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                  }
                 >
                   Alătură-te la Joc
                 </button>
               ) : (
-                <form onSubmit={handleJoinGame}>
+                <form
+                  onSubmit={handleJoinGame}
+                  className="fade-in"
+                  style={{
+                    animation: "slideIn 0.4s ease-out",
+                  }}
+                >
                   <div className="form-group">
                     <label className="form-label">Cod Lobby</label>
                     <input
@@ -265,11 +304,21 @@ const LobbyPage: React.FC = () => {
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    style={{ width: "100%" }}
+                    style={{
+                      width: "100%",
+                      transition: "all 0.3s ease",
+                      transform: "scale(1)",
+                    }}
                     onClick={() => {
                       setShowJoinForm(false);
                       setLobbyCode("");
                     }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.transform = "scale(1.02)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.transform = "scale(1)")
+                    }
                   >
                     Anulează
                   </button>

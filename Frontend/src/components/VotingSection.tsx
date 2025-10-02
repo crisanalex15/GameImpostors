@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { RoundResponse, PlayerResponse } from "../types/game";
+import { RoundResponse, PlayerResponse, RoundState } from "../types/game";
 import { gameApi } from "../services/api";
 
 export interface VotingSectionProps {
@@ -50,6 +50,44 @@ const VotingSection: React.FC<VotingSectionProps> = ({
   const getPlayerIcon = (player: PlayerResponse) => {
     if (player.isEliminated) return "💀";
     return "👤";
+  };
+
+  const getVotingResults = () => {
+    if (!round.votes || round.votes.length === 0) return null;
+
+    // Grupează voturile după țintă
+    const voteCounts: { [key: string]: number } = {};
+    round.votes.forEach((vote) => {
+      voteCounts[vote.targetId] = (voteCounts[vote.targetId] || 0) + 1;
+    });
+
+    // Găsește jucătorul cu cele mai multe voturi
+    const mostVotedPlayer = Object.keys(voteCounts).reduce((a, b) =>
+      voteCounts[a] > voteCounts[b] ? a : b
+    );
+
+    return {
+      mostVotedPlayer,
+      voteCounts,
+      totalVotes: round.votes.length,
+    };
+  };
+
+  const getScoreInfo = () => {
+    const results = getVotingResults();
+    if (!results) return null;
+
+    const mostVotedPlayer = players.find(
+      (p) => p.id === results.mostVotedPlayer
+    );
+    if (!mostVotedPlayer) return null;
+
+    return {
+      eliminatedPlayer: mostVotedPlayer,
+      wasImpostor: mostVotedPlayer.isImpostor,
+      crewmatePoints: mostVotedPlayer.isImpostor ? 100 : 0,
+      impostorPoints: mostVotedPlayer.isImpostor ? 50 : 0,
+    };
   };
 
   const canVoteForPlayer = (player: PlayerResponse) => {
@@ -198,6 +236,109 @@ const VotingSection: React.FC<VotingSectionProps> = ({
           fi eliminat.
         </p>
       </div>
+
+      {/* Voting Results and Score Display */}
+      {round.state === RoundState.Ended && getScoreInfo() && (
+        <div
+          style={{
+            marginTop: "30px",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white",
+            padding: "20px",
+            borderRadius: "15px",
+            textAlign: "center",
+          }}
+        >
+          <h3 style={{ marginBottom: "20px", fontSize: "1.5rem" }}>
+            🎯 Rezultatele Votului
+          </h3>
+
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.2)",
+              padding: "15px",
+              borderRadius: "10px",
+              marginBottom: "20px",
+            }}
+          >
+            <h4 style={{ marginBottom: "10px" }}>
+              {getScoreInfo()?.eliminatedPlayer.isImpostor
+                ? "👹 Impostor eliminat!"
+                : "👤 Crewmate eliminat"}
+            </h4>
+            <p style={{ fontSize: "1.1rem", margin: "0" }}>
+              {getPlayerName(getScoreInfo()?.eliminatedPlayer.id || "")} a fost
+              eliminat
+            </p>
+          </div>
+
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.2)",
+              padding: "15px",
+              borderRadius: "10px",
+              marginBottom: "20px",
+            }}
+          >
+            <h4 style={{ marginBottom: "15px" }}>🏆 Puncte Acordate</h4>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-around",
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ margin: "10px" }}>
+                <div
+                  style={{
+                    fontSize: "1.2rem",
+                    fontWeight: "bold",
+                    color: "#28a745",
+                  }}
+                >
+                  +{getScoreInfo()?.crewmatePoints} puncte
+                </div>
+                <div style={{ fontSize: "0.9rem" }}>Crewmates</div>
+              </div>
+              {getScoreInfo()?.wasImpostor && (
+                <div style={{ margin: "10px" }}>
+                  <div
+                    style={{
+                      fontSize: "1.2rem",
+                      fontWeight: "bold",
+                      color: "#ffc107",
+                    }}
+                  >
+                    +{getScoreInfo()?.impostorPoints} puncte
+                  </div>
+                  <div style={{ fontSize: "0.9rem" }}>
+                    Impostor (dacă ghiceste cuvântul)
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {getScoreInfo()?.wasImpostor && (
+            <div
+              style={{
+                background: "rgba(255, 193, 7, 0.3)",
+                padding: "15px",
+                borderRadius: "10px",
+                border: "2px solid #ffc107",
+              }}
+            >
+              <h4 style={{ marginBottom: "10px", color: "#ffc107" }}>
+                🎲 Faza Finală - Ghicirea Cuvântului
+              </h4>
+              <p style={{ margin: "0", fontSize: "1rem" }}>
+                Impostorul eliminat poate încerca să ghicească cuvântul pentru a
+                câștiga 50 de puncte!
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

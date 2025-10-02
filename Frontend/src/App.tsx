@@ -10,10 +10,14 @@ import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import Header from "./components/Header";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { useGameRedirect } from "./hooks/useGameRedirect";
 import "./App.css";
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
+
+  // Verifică dacă utilizatorul este într-un joc activ și îl redirecționează
+  useGameRedirect();
 
   return (
     <>

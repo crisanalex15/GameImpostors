@@ -49,7 +49,14 @@ namespace Backend.Controllers.API
                 }
 
                 // Update game settings
-                game.ImpostorCount = request.ImpostorCount;
+                if (request.ImpostorCount != 0 && request.ImpostorCount == 4)
+                {
+                    game.ImpostorCount = game.GetRandomImpostorCount(game.MaxPlayers);
+                }
+                else
+                {
+                    game.ImpostorCount = request.ImpostorCount;
+                }
                 game.TimerDuration = request.TimerDuration;
                 game.MaxRounds = request.MaxRounds;
 

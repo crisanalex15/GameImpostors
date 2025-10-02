@@ -1,17 +1,24 @@
 import React, { useState } from "react";
-import { RoundResponse, GameType, RoundState } from "../types/game";
+import {
+  RoundResponse,
+  GameType,
+  RoundState,
+  PlayerResponse,
+} from "../types/game";
 import { gameApi } from "../services/api";
 
 interface RoundDisplayProps {
   round: RoundResponse;
   gameType: GameType;
   gameId: string;
+  players: PlayerResponse[];
   onStateUpdate: () => void;
 }
 
 const RoundDisplay: React.FC<RoundDisplayProps> = ({
   round,
   gameType,
+  players,
   onStateUpdate,
 }) => {
   const [answer, setAnswer] = useState("");
@@ -19,11 +26,13 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!answer.trim() || isSubmitting) return;
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
     try {
-      await gameApi.submitAnswer(round.id, { answer: answer.trim() });
+      // Pentru WordHidden, trimitem un răspuns gol sau "ready"
+      const answerToSubmit = answer.trim() || "ready";
+      await gameApi.submitAnswer(round.id, { answer: answerToSubmit });
       setAnswer("");
       onStateUpdate();
     } catch (err: any) {
@@ -33,18 +42,54 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
     }
   };
 
+  const getReadyCount = () => {
+    if (gameType !== GameType.WordHidden || round.state !== RoundState.Active) {
+      return null;
+    }
+
+    // Numără câți jucători au răspuns (sunt gata de vot)
+    const readyCount = round.answers ? round.answers.length : 0;
+    const totalPlayers = players.length;
+    const remainingCount = totalPlayers - readyCount;
+
+    return {
+      ready: readyCount,
+      total: totalPlayers,
+      remaining: remainingCount,
+    };
+  };
+
   const getRoundTitle = () => {
     switch (round.state) {
       case RoundState.Waiting:
-        return "Așteaptă să înceapă runda...";
+        return "🎯 Runda începe...";
       case RoundState.Active:
-        return "Runda activă - Răspunde la întrebare!";
+        return gameType === GameType.WordHidden
+          ? "💬 Discutați și găsiți impostorul!"
+          : "❓ Răspunde la întrebare!";
       case RoundState.Voting:
-        return "Faza de votare - Votează cine crezi că e impostorul!";
+        return "🗳️ Votează cine crezi că e impostorul!";
       case RoundState.Ended:
-        return "Runda s-a terminat";
+        return "✅ Runda s-a terminat";
       default:
-        return "Runda";
+        return "🎮 Runda";
+    }
+  };
+
+  const getRoundDescription = () => {
+    switch (round.state) {
+      case RoundState.Waiting:
+        return "Pregătiți-vă pentru runda următoare...";
+      case RoundState.Active:
+        return gameType === GameType.WordHidden
+          ? "Discutați în camera de chat și încercați să găsiți impostorul. Când sunteți gata, apăsați 'Sunt gata de vot'!"
+          : "Răspunde la întrebarea de mai jos. Ai timp limitat!";
+      case RoundState.Voting:
+        return "Toți jucătorii au răspuns. Acum votați cine credeți că este impostorul!";
+      case RoundState.Ended:
+        return "Rezultatele rundei au fost calculate.";
+      default:
+        return "";
     }
   };
 
@@ -68,12 +113,80 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
     <div className="card">
       <div className="game-status">
         <h2>{getRoundTitle()}</h2>
-        <p>Runda {round.roundNumber}</p>
+        <p
+          style={{
+            textAlign: "center",
+            margin: "10px 0",
+            color: "#666",
+            fontSize: "1rem",
+          }}
+        >
+          {getRoundDescription()}
+        </p>
       </div>
 
-      {/* No timer - players control the pace */}
+      {/* Content Display */}
+      {round.state === RoundState.Active && getContent() && (
+        <>
+          <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
+            {getContentLabel()}
+          </h3>
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.9)",
+              padding: "20px",
+              borderRadius: "10px",
+              textAlign: "center",
+              fontSize: "1.2rem",
+              fontWeight: "bold",
+              marginBottom: "20px",
+              border: "2px solid #667eea",
+            }}
+          >
+            {getContent()}
+          </div>
+        </>
+      )}
 
-      {/* Game Content */}
+      {/* Ready to Vote Button for WordHidden */}
+      {round.state === RoundState.Active &&
+        gameType === GameType.WordHidden &&
+        !round.hasPlayerAnswered && (
+          <div style={{ textAlign: "center", marginBottom: "20px" }}>
+            <button
+              className="btn btn-success"
+              onClick={handleSubmitAnswer}
+              disabled={isSubmitting}
+              style={{
+                fontSize: "1.1rem",
+                padding: "12px 30px",
+                borderRadius: "25px",
+                fontWeight: "bold",
+                background: "linear-gradient(45deg, #28a745, #20c997)",
+                border: "none",
+                color: "white",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                boxShadow: "0 4px 15px rgba(40, 167, 69, 0.3)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "scale(1.01)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              {isSubmitting
+                ? "Se procesează..."
+                : "Sunt gata de vot!" +
+                  " " +
+                  getReadyCount()?.ready +
+                  "/" +
+                  getReadyCount()?.total}
+            </button>
+          </div>
+        )}
+      {/* Game Content
       {round.state === RoundState.Active && getContent() && (
         <div className="answer-section">
           <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
@@ -93,8 +206,7 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
           >
             {getContent()}
           </div>
-
-          {/* Answer Form */}
+          Answer Form
           {!round.hasPlayerAnswered && (
             <form onSubmit={handleSubmitAnswer}>
               <div className="form-group">
@@ -128,7 +240,6 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
               </button>
             </form>
           )}
-
           {round.hasPlayerAnswered && (
             <div
               style={{
@@ -145,8 +256,7 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
             </div>
           )}
         </div>
-      )}
-
+      )} */}
       {/* Answers Display */}
       {round.state === RoundState.Voting && round.answers.length > 0 && (
         <div className="answer-section">
@@ -174,7 +284,6 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
           </div>
         </div>
       )}
-
       {/* Round Ended */}
       {round.state === RoundState.Ended && (
         <div

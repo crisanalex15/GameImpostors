@@ -10,11 +10,12 @@ import { useAuth } from "../contexts/AuthContext";
 const GamePage: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, setCurrentGameId } = useAuth();
   const [gameState, setGameState] = useState<GameStateResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isReady, setIsReady] = useState(false);
+  const [isPlayersExpanded, setIsPlayersExpanded] = useState(false);
 
   useEffect(() => {
     if (gameId) {
@@ -32,6 +33,9 @@ const GamePage: React.FC = () => {
       const state = await gameApi.getGameState(gameId);
       setGameState(state);
       setIsLoading(false);
+
+      // Setează gameId-ul în context pentru a fi redirecționat automat la refresh
+      setCurrentGameId(gameId);
     } catch (err: any) {
       setError(err.response?.data?.message || "Eroare la încărcarea jocului");
       setIsLoading(false);
@@ -55,6 +59,7 @@ const GamePage: React.FC = () => {
     if (!gameId) return;
 
     try {
+      setIsPlayersExpanded(false); // Ascunde lista de jucători când începe jocul
       await gameApi.startGame(gameId);
       await loadGameState();
     } catch (err: any) {
@@ -62,11 +67,16 @@ const GamePage: React.FC = () => {
     }
   };
 
+  const togglePlayersList = () => {
+    setIsPlayersExpanded(!isPlayersExpanded);
+  };
+
   const handleLeaveGame = async () => {
     if (!gameId) return;
 
     try {
       await gameApi.leaveGame(gameId);
+      setCurrentGameId(null); // Șterge gameId-ul din context
       navigate("/lobby");
     } catch (err: any) {
       setError(err.response?.data?.message || "Eroare la părăsirea jocului");
@@ -129,39 +139,167 @@ const GamePage: React.FC = () => {
 
   return (
     <div className="container">
-      <div className="card" style={{ padding: "15px" }}>
-        {/* Game Header */}
-        <div className="game-status" style={{ marginBottom: "15px" }}>
-          <h1 style={{ fontSize: "1.5rem", marginBottom: "5px" }}>
-            🎮 GameImpostors
-          </h1>
-          <p style={{ fontSize: "0.9rem", margin: "0" }}>
-            {gameState.state === GameState.Lobby &&
-              "Lobby - Așteaptă să înceapă jocul"}
-            {gameState.state === GameState.Game &&
-              `Runda ${gameState.roundNumber}/${gameState.maxRounds}`}
-            {gameState.state === GameState.Ended && "Jocul s-a terminat"}
-          </p>
-          <p style={{ fontSize: "0.8rem", margin: "0" }}>
-            Cod: <strong>{gameState.lobbyCode}</strong>
-          </p>
-        </div>
+      {/* Game Header - Always visible */}
+      <div
+        className="game-header"
+        style={{
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          backdropFilter: "brightness(0.8)",
+          width: "100%",
+          color: "white",
+          padding: "15px",
+          borderRadius: "10px",
+          borderTopLeftRadius: "0px",
+          borderBottomRightRadius: "0px",
+          borderBottomLeftRadius: "0px",
+          position: "relative",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <h1
+              style={{ fontSize: "1.5rem", marginBottom: "5px", margin: "0" }}
+            >
+              🎮 GameImpostors
+            </h1>
+            <p style={{ fontSize: "0.9rem", margin: "5px 0" }}>
+              {gameState.state === GameState.Lobby &&
+                "Lobby - Așteaptă să înceapă jocul"}
+              {gameState.state === GameState.Ended && "Jocul s-a terminat"}
+            </p>
+            <p style={{ fontSize: "0.9rem", margin: "0" }}>
+              Cod: <strong>{gameState.lobbyCode}</strong>
+              {gameState.state === GameState.Game && (
+                <span style={{ marginLeft: "15px" }}>
+                  👥 {gameState.players.length} jucători
+                </span>
+              )}
+            </p>
+          </div>
 
-        {/* Game Controls */}
-        <div style={{ textAlign: "center", marginBottom: "30px" }}>
+          {/* Header Buttons - Show in lobby and during game */}
+          {(gameState.state === GameState.Game ||
+            gameState.state === GameState.Lobby) && (
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              {/* Players Toggle Button - Only show during game rounds */}
+              {gameState.state === GameState.Game && (
+                <button
+                  onClick={togglePlayersList}
+                  style={{
+                    background: "rgba(255,255,255,0.2)",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "50px",
+                    height: "50px",
+                    color: "white",
+                    fontSize: "1.2rem",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    transform: isPlayersExpanded
+                      ? "rotate(180deg)"
+                      : "rotate(0deg)",
+                  }}
+                  title={
+                    isPlayersExpanded ? "Ascunde jucătorii" : "Arată jucătorii"
+                  }
+                >
+                  ⬇️
+                </button>
+              )}
+
+              {/* Leave Game Button - Show in lobby and during game */}
+              {(gameState.state === GameState.Game ||
+                gameState.state === GameState.Lobby) && (
+                <button
+                  onClick={handleLeaveGame}
+                  style={{
+                    background: "rgba(220, 53, 69, 0.8)",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "50px",
+                    height: "50px",
+                    color: "white",
+                    fontSize: "1.2rem",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  title="Părăsește Jocul"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(220, 53, 69, 1)";
+                    e.currentTarget.style.transform = "scale(1.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(220, 53, 69, 0.8)";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                >
+                  🚪
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Players List - Collapsible during game */}
+      <div
+        style={{
+          maxHeight:
+            gameState.state === GameState.Lobby
+              ? "none"
+              : isPlayersExpanded
+              ? "500px"
+              : "0px",
+          overflow: "hidden",
+          transition: "max-height 0.3s ease",
+          marginBottom: "0px", // Eliminat margin-ul
+        }}
+      >
+        <div
+          className="card"
+          style={{
+            padding: "15px",
+            borderTopLeftRadius: "0px",
+            borderTopRightRadius: "0px",
+            margin: "0", // Eliminat orice margin
+            borderBottomLeftRadius: "0px",
+            borderBottomRightRadius: "0px",
+          }}
+        >
+          {/* Game Controls */}
           {gameState.state === GameState.Lobby && (
-            <div>
+            <div
+              style={{
+                textAlign: "center",
+                marginBottom: "10px",
+              }}
+            >
               <button
                 className={`btn ${isReady ? "btn-success" : "btn-primary"}`}
                 onClick={handleSetReady}
-                style={{ marginRight: "10px", marginBottom: "10px" }}
+                style={{
+                  marginRight: "10px",
+                  minWidth: "150px", // Lățime fixă
+                  height: "40px", // Înălțime fixă
+                  transition: "all 0.3s ease",
+                }}
               >
                 {isReady ? "✓ Gata" : "Nu sunt gata"}
               </button>
 
               {isHost && (
                 <button
-                  className="btn btn-success"
+                  className="btn btn-start"
                   onClick={handleStartGame}
                   disabled={!canStart}
                 >
@@ -170,46 +308,36 @@ const GamePage: React.FC = () => {
               )}
             </div>
           )}
-        </div>
-
-        {/* Players List */}
-        <PlayerList
-          players={gameState.players}
-          gameState={gameState.state}
-          currentRound={gameState.currentRound}
-          currentUserId={user?.id}
-        />
-
-        {/* Current Round Display */}
-        {gameState.currentRound && (
-          <RoundDisplay
-            round={gameState.currentRound}
-            gameType={gameState.type}
-            gameId={gameId!}
-            onStateUpdate={loadGameState}
-          />
-        )}
-
-        {/* Voting Section */}
-        {gameState.currentRound?.state === RoundState.Voting && (
-          <VotingSection
-            round={gameState.currentRound}
+          <PlayerList
             players={gameState.players}
-            gameId={gameId!}
+            gameState={gameState.state}
+            currentRound={gameState.currentRound}
             currentUserId={user?.id}
-            onVoteSubmitted={loadGameState}
           />
-        )}
-        {!isReady && (
-          <button
-            className="btn btn-danger"
-            onClick={handleLeaveGame}
-            style={{ width: "100%" }}
-          >
-            Părăsește Jocul
-          </button>
-        )}
+        </div>
       </div>
+
+      {/* Current Round Display - Always visible */}
+      {gameState.currentRound && (
+        <RoundDisplay
+          round={gameState.currentRound}
+          gameType={gameState.type}
+          gameId={gameId!}
+          players={gameState.players}
+          onStateUpdate={loadGameState}
+        />
+      )}
+
+      {/* Voting Section - Always visible */}
+      {gameState.currentRound?.state === RoundState.Voting && (
+        <VotingSection
+          round={gameState.currentRound}
+          players={gameState.players}
+          gameId={gameId!}
+          currentUserId={user?.id}
+          onVoteSubmitted={loadGameState}
+        />
+      )}
     </div>
   );
 };

@@ -44,67 +44,108 @@ const PlayerList: React.FC<PlayerListProps> = ({
         Jucători ({players.length})
       </h2>
 
-      <div className="grid grid-3">
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "10px",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         {players.map((player) => {
           const status = getPlayerStatus(player);
           const icon = getPlayerIcon(player);
           const name = getPlayerName(player);
 
           return (
-            <div key={player.id} className={`player-card ${status}`}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "2rem", marginBottom: "5px" }}>
-                  {icon}
+            <div
+              key={player.id}
+              className={`player-card ${status}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 12px",
+                borderRadius: "20px",
+                backgroundColor:
+                  status === "eliminated"
+                    ? "#f8f9fa"
+                    : status === "impostor"
+                    ? "#ffebee"
+                    : status === "ready"
+                    ? "#e8f5e8"
+                    : "#fff",
+                border:
+                  status === "impostor"
+                    ? "2px solid #dc3545"
+                    : status === "ready"
+                    ? "2px solid #28a745"
+                    : "1px solid #ddd",
+                minWidth: "fit-content",
+                transition: "all 0.3s ease",
+              }}
+            >
+              <div style={{ fontSize: "1.5rem" }}>{icon}</div>
+              <div>
+                <div
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: "0.9rem",
+                    color:
+                      status === "eliminated"
+                        ? "#6c757d"
+                        : status === "impostor"
+                        ? "#dc3545"
+                        : "#333",
+                  }}
+                >
+                  {name}
                 </div>
-                <h3 style={{ marginBottom: "5px" }}>{name}</h3>
 
                 {gameState === GameState.Lobby && (
-                  <p
+                  <div
                     style={{
+                      fontSize: "0.8rem",
                       color: player.isReady ? "#28a745" : "#6c757d",
                       fontWeight: "bold",
                     }}
                   >
-                    {player.isReady ? "Gata" : "Nu e gata"}
-                  </p>
+                    {player.isReady ? "✓ Gata" : "⏳ Nu e gata"}
+                  </div>
                 )}
 
                 {gameState === GameState.Game && (
-                  <div>
-                    <p style={{ color: "#666", fontSize: "0.9rem" }}>
-                      Scor: {player.score}
-                    </p>
+                  <div style={{ fontSize: "0.8rem" }}>
+                    <div style={{ color: "#666" }}>Scor: {player.score}</div>
                     {currentRound && (
-                      <p
+                      <div
                         style={{
                           color: currentRound.hasPlayerAnswered
                             ? "#28a745"
                             : "#dc3545",
-                          fontSize: "0.9rem",
                           fontWeight: "bold",
                         }}
                       >
                         {currentRound.hasPlayerAnswered
-                          ? "A răspuns"
-                          : "Nu a răspuns"}
-                      </p>
+                          ? "✓ A răspuns"
+                          : "⏳ Nu a răspuns"}
+                      </div>
                     )}
                   </div>
                 )}
 
                 {gameState === GameState.Ended && (
-                  <div>
-                    <p
+                  <div style={{ fontSize: "0.8rem" }}>
+                    <div
                       style={{
                         color: player.isImpostor ? "#dc3545" : "#28a745",
                         fontWeight: "bold",
                       }}
                     >
-                      {player.isImpostor ? "Impostor" : "Crewmate"}
-                    </p>
-                    <p style={{ color: "#666", fontSize: "0.9rem" }}>
-                      Scor final: {player.score}
-                    </p>
+                      {player.isImpostor ? "👹 Impostor" : "👤 Crewmate"}
+                    </div>
+                    <div style={{ color: "#666" }}>Scor: {player.score}</div>
                   </div>
                 )}
               </div>

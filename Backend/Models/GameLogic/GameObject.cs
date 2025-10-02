@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Backend.Models
@@ -79,6 +80,11 @@ namespace Backend.Models
         public void UpdateTimestamp()
         {
             UpdatedAt = DateTime.UtcNow;
+        }
+
+        public int GetRandomImpostorCount(int maxPlayers)
+        {
+            return new Random().Next(1, maxPlayers / 2 + 1);
         }
     }
 }
