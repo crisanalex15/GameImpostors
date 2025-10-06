@@ -21,11 +21,130 @@ const api = axios.create({
 // Add auth token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("authToken");
+  console.log(
+    "API Request:",
+    config.url,
+    "Token:",
+    token ? "Present" : "Missing"
+  );
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log("Authorization header set:", config.headers.Authorization);
   }
   return config;
 });
+
+// Add response interceptor for debugging
+api.interceptors.response.use(
+  (response) => {
+    console.log(
+      "API Response:",
+      response.config.url,
+      "Status:",
+      response.status
+    );
+    return response;
+  },
+  (error) => {
+    console.log(
+      "API Error:",
+      error.config?.url,
+      "Status:",
+      error.response?.status,
+      "Message:",
+      error.response?.data
+    );
+    return Promise.reject(error);
+  }
+);
+
+// Auth API functions
+export const authApi = {
+  // Get user profile
+  getProfile: async (): Promise<ApiResponse<any>> => {
+    const response = await api.get("/Auth/profile");
+    return response.data;
+  },
+
+  // Update username
+  updateUsername: async (request: {
+    username: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.post("/Auth/Update-username", request);
+    return response.data;
+  },
+
+  // Change password
+  changePassword: async (request: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.post("/Auth/change-password", request);
+    return response.data;
+  },
+
+  // Logout
+  logout: async (): Promise<ApiResponse<any>> => {
+    const response = await api.post("/Auth/logout");
+    return response.data;
+  },
+
+  // Login
+  login: async (request: {
+    email: string;
+    password: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.post("/Auth/login", request);
+    return response.data;
+  },
+
+  // Register
+  register: async (request: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.post("/Auth/register", request);
+    return response.data;
+  },
+
+  // Verify email with code
+  verifyEmail: async (request: {
+    email: string;
+    code: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.post("/Auth/verify-email-with-code", request);
+    return response.data;
+  },
+
+  // Forgot password
+  forgotPassword: async (request: {
+    email: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.post("/Auth/forgot-password", request);
+    return response.data;
+  },
+
+  // Reset password
+  resetPassword: async (request: {
+    email: string;
+    code: string;
+    newPassword: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.post("/Auth/reset-password", request);
+    return response.data;
+  },
+
+  // Refresh token
+  refreshToken: async (request: {
+    token: string;
+    refreshToken: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.post("/Auth/refresh-token", request);
+    return response.data;
+  },
+};
 
 export const gameApi = {
   // Lobby Management

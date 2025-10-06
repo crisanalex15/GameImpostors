@@ -8,6 +8,7 @@ import LobbyPage from "./components/LobbyPage";
 import GamePage from "./components/GamePage";
 import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
+import SettingsPage from "./components/SettingsPage";
 import Header from "./components/Header";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { useGameRedirect } from "./hooks/useGameRedirect";
@@ -40,6 +41,12 @@ function AppRoutes() {
         <Route
           path="/game/:gameId"
           element={isAuthenticated ? <GamePage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/settings"
+          element={
+            isAuthenticated ? <SettingsPage /> : <Navigate to="/login" />
+          }
         />
         <Route path="/" element={<Navigate to="/lobby" />} />
       </Routes>

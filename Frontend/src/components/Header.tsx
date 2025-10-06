@@ -11,6 +11,10 @@ const Header: React.FC = () => {
     navigate("/login");
   };
 
+  const handleProfileClick = () => {
+    navigate("/settings");
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -38,11 +42,28 @@ const Header: React.FC = () => {
 
         {user && (
           <div className="header-right">
-            <div className="user-info">
+            <div
+              className="user-info"
+              onClick={handleProfileClick}
+              style={{ cursor: "pointer" }}
+            >
               <div className="user-avatar">
-                {getInitials(`${user.firstName} ${user.lastName}`)}
+                {getInitials(
+                  `${
+                    user.firstName ||
+                    user.lastName ||
+                    user.email?.split("@")[0] ||
+                    "Utilizator"
+                  }`
+                )}
               </div>
-              <span>Bună, {user.firstName}!</span>
+              <span>
+                Bună,{" "}
+                {user.firstName ||
+                  user.lastName ||
+                  user.email?.split("@")[0] ||
+                  "Utilizator"}
+              </span>
             </div>
             <button className="logout-btn" onClick={handleLogout}>
               Logout

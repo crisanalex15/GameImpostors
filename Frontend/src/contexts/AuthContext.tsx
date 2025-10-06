@@ -47,9 +47,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const storedUser = localStorage.getItem("user");
     const storedGameId = localStorage.getItem("currentGameId");
 
+    console.log("AuthContext - Loading from localStorage:");
+    console.log("Token:", storedToken ? "Present" : "Missing");
+    console.log("User:", storedUser ? "Present" : "Missing");
+
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
+      console.log("AuthContext - Token and user loaded successfully");
     }
 
     if (storedGameId) {
@@ -58,10 +63,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = (newToken: string, newUser: User) => {
+    console.log(
+      "AuthContext - Login called with token:",
+      newToken ? "Present" : "Missing"
+    );
+    console.log("AuthContext - Login called with user:", newUser);
+
     setToken(newToken);
     setUser(newUser);
     localStorage.setItem("authToken", newToken);
     localStorage.setItem("user", JSON.stringify(newUser));
+
+    console.log("AuthContext - Token and user saved to localStorage");
 
     // Verifică dacă există un gameId salvat și îl setează
     const storedGameId = localStorage.getItem("currentGameId");

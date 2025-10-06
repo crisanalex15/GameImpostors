@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { gameApi } from "../services/api";
 import { CreateGameRequest, GameType } from "../types/game";
@@ -74,7 +74,13 @@ const LobbyPage: React.FC = () => {
               </h1>
               <p style={{ color: "#666", fontSize: "1.1rem" }}>
                 Bine ai venit în lobby,{" "}
-                <strong>{user?.firstName || user?.email}</strong>!
+                <strong>
+                  {user?.firstName ||
+                    user?.lastName ||
+                    user?.email?.split("@")[0] ||
+                    "Utilizator"}
+                </strong>
+                !
               </p>
             </div>
           </div>

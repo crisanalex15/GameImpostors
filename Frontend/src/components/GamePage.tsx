@@ -83,6 +83,29 @@ const GamePage: React.FC = () => {
     }
   };
 
+  const handleNewGame = async () => {
+    if (!gameState) return;
+
+    try {
+      // Folosește aceleași setări ca jocul curent
+      const newGameData = {
+        gameType: gameState.type,
+        maxPlayers: gameState.maxPlayers,
+        impostorCount: 1, // Default impostor count
+        timerDuration: gameState.timerDuration,
+        maxRounds: gameState.maxRounds,
+      };
+
+      const response = await gameApi.createGame(newGameData);
+      if (response.game) {
+        setCurrentGameId(response.game.id);
+        navigate(`/game/${response.game.id}`);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Eroare la crearea jocului nou");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -182,11 +205,27 @@ const GamePage: React.FC = () => {
                 </span>
               )}
             </p>
+            {user && (
+              <p
+                style={{
+                  fontSize: "0.8rem",
+                  margin: "5px 0 0 0",
+                  opacity: 0.9,
+                }}
+              >
+                👤{" "}
+                {user.firstName ||
+                  user.lastName ||
+                  user.email?.split("@")[0] ||
+                  "Utilizator"}
+              </p>
+            )}
           </div>
 
-          {/* Header Buttons - Show in lobby and during game */}
+          {/* Header Buttons - Show in lobby, during game, and when ended */}
           {(gameState.state === GameState.Game ||
-            gameState.state === GameState.Lobby) && (
+            gameState.state === GameState.Lobby ||
+            gameState.state === GameState.Ended) && (
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               {/* Players Toggle Button - Only show during game rounds */}
               {gameState.state === GameState.Game && (
@@ -214,9 +253,10 @@ const GamePage: React.FC = () => {
                 </button>
               )}
 
-              {/* Leave Game Button - Show in lobby and during game */}
+              {/* Leave Game Button - Show in lobby, during game, and when ended */}
               {(gameState.state === GameState.Game ||
-                gameState.state === GameState.Lobby) && (
+                gameState.state === GameState.Lobby ||
+                gameState.state === GameState.Ended) && (
                 <button
                   onClick={handleLeaveGame}
                   style={{
@@ -325,6 +365,8 @@ const GamePage: React.FC = () => {
           gameId={gameId!}
           players={gameState.players}
           onStateUpdate={loadGameState}
+          onNewGame={handleNewGame}
+          onLeaveLobby={handleLeaveGame}
         />
       )}
 
@@ -335,7 +377,9 @@ const GamePage: React.FC = () => {
           players={gameState.players}
           gameId={gameId!}
           currentUserId={user?.id}
+          gameType={gameState.type}
           onVoteSubmitted={loadGameState}
+          onNextRound={loadGameState}
         />
       )}
     </div>
