@@ -5,10 +5,12 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+import { authApi } from "../services/api";
 
 interface User {
   id: string;
   email: string;
+  userName?: string;
   firstName?: string;
   lastName?: string;
 }
@@ -47,14 +49,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const storedUser = localStorage.getItem("user");
     const storedGameId = localStorage.getItem("currentGameId");
 
-    console.log("AuthContext - Loading from localStorage:");
-    console.log("Token:", storedToken ? "Present" : "Missing");
-    console.log("User:", storedUser ? "Present" : "Missing");
-
     if (storedToken && storedUser) {
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      console.log("AuthContext - Token and user loaded successfully");
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+
+      // If userName is missing, fetch minimal profile to update it
+      if (!parsedUser.userName) {
+        authApi
+          .getMinimalProfile()
+          .then((profile) => {
+            const updatedUser = {
+              ...parsedUser,
+              userName: profile.username,
+            };
+            setUser(updatedUser);
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+          })
+          .catch((error) => {
+            console.error("Failed to fetch minimal profile:", error);
+          });
+      }
     }
 
     if (storedGameId) {
@@ -63,18 +78,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = (newToken: string, newUser: User) => {
-    console.log(
-      "AuthContext - Login called with token:",
-      newToken ? "Present" : "Missing"
-    );
-    console.log("AuthContext - Login called with user:", newUser);
-
     setToken(newToken);
     setUser(newUser);
     localStorage.setItem("authToken", newToken);
     localStorage.setItem("user", JSON.stringify(newUser));
-
-    console.log("AuthContext - Token and user saved to localStorage");
 
     // Verifică dacă există un gameId salvat și îl setează
     const storedGameId = localStorage.getItem("currentGameId");

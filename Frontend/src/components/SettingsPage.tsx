@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { authApi } from "../services/api";
 
@@ -27,6 +28,7 @@ interface ApiResponse<T> {
 
 const SettingsPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
@@ -49,16 +51,15 @@ const SettingsPage: React.FC = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      console.log("Fetching profile...");
-      const response = await authApi.getProfile();
+      const response = await authApi.getMinimalProfile();
       console.log("Profile response:", response);
       // Backend returns data directly, not wrapped in a data property
       setProfile(response);
-      setUsernameForm({ username: response.userName || "" });
+      // Backend should use camelCase (username with lowercase u) due to JsonNamingPolicy.CamelCase
+      setUsernameForm({ username: response.username || "" });
     } catch (error: any) {
-      showMessage("error", "Failed to fetch profile");
       console.error("Profile fetch error:", error);
-      console.error("Error response:", error.response);
+      showMessage("error", "Failed to fetch profile");
     } finally {
       setLoading(false);
     }
@@ -146,7 +147,44 @@ const SettingsPage: React.FC = () => {
   return (
     <div className="settings-container">
       <div className="settings-content">
-        <h1>Settings</h1>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <h1 style={{ margin: 0 }}>Settings</h1>
+          <button
+            onClick={() => navigate("/lobby")}
+            style={{
+              padding: "10px 20px",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "1rem",
+              fontWeight: "bold",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.05)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 15px rgba(102, 126, 234, 0.4)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            ← Back to Lobby
+          </button>
+        </div>
 
         {message && (
           <div className={`message ${message.type}`}>{message.text}</div>
@@ -167,7 +205,7 @@ const SettingsPage: React.FC = () => {
               </div>
               <div className="info-item">
                 <label>Username:</label>
-                <span>{profile.userName}</span>
+                <span>{profile.username}</span>
               </div>
               <div className="info-item">
                 <label>First Name:</label>

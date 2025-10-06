@@ -21,15 +21,8 @@ const api = axios.create({
 // Add auth token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("authToken");
-  console.log(
-    "API Request:",
-    config.url,
-    "Token:",
-    token ? "Present" : "Missing"
-  );
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log("Authorization header set:", config.headers.Authorization);
   }
   return config;
 });
@@ -37,29 +30,21 @@ api.interceptors.request.use((config) => {
 // Add response interceptor for debugging
 api.interceptors.response.use(
   (response) => {
-    console.log(
-      "API Response:",
-      response.config.url,
-      "Status:",
-      response.status
-    );
     return response;
   },
   (error) => {
-    console.log(
-      "API Error:",
-      error.config?.url,
-      "Status:",
-      error.response?.status,
-      "Message:",
-      error.response?.data
-    );
     return Promise.reject(error);
   }
 );
 
 // Auth API functions
 export const authApi = {
+  // Get minimal profile
+  getMinimalProfile: async (): Promise<any> => {
+    const response = await api.get("/Auth/minimal-profile");
+    return response.data;
+  },
+
   // Get user profile
   getProfile: async (): Promise<ApiResponse<any>> => {
     const response = await api.get("/Auth/profile");

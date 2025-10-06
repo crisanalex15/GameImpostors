@@ -143,6 +143,22 @@ const LoginPage: React.FC = () => {
               Înregistrează-te aici
             </button>
           </p>
+          <p>
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#667eea",
+                textDecoration: "underline",
+                cursor: "pointer",
+                fontSize: "inherit",
+              }}
+            >
+              Ai uitat parola?
+            </button>
+          </p>
         </div>
       </div>
     </div>

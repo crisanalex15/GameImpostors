@@ -21,6 +21,10 @@ const LobbyPage: React.FC = () => {
     maxRounds: 3,
   });
 
+  useEffect(() => {
+    console.log("User in LobbyPage:", user);
+  }, [user]);
+
   const handleCreateGame = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -75,10 +79,7 @@ const LobbyPage: React.FC = () => {
               <p style={{ color: "#666", fontSize: "1.1rem" }}>
                 Bine ai venit în lobby,{" "}
                 <strong>
-                  {user?.firstName ||
-                    user?.lastName ||
-                    user?.email?.split("@")[0] ||
-                    "Utilizator"}
+                  {user?.userName || user?.email?.split("@")[0] || "Utilizator"}
                 </strong>
                 !
               </p>

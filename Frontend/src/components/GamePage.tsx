@@ -213,11 +213,7 @@ const GamePage: React.FC = () => {
                   opacity: 0.9,
                 }}
               >
-                👤{" "}
-                {user.firstName ||
-                  user.lastName ||
-                  user.email?.split("@")[0] ||
-                  "Utilizator"}
+                👤 {user.userName || user.email?.split("@")[0] || "Utilizator"}
               </p>
             )}
           </div>
