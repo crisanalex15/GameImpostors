@@ -28,12 +28,16 @@ const PlayerList: React.FC<PlayerListProps> = ({
     return "👤";
   };
 
-  const getPlayerName = (player: PlayerResponse) => {
+  const getPlayerName = (player: PlayerResponse, userName: string) => {
     // Dacă e jucătorul curent, afișează "Tu"
     if (currentUserId && player.userId === currentUserId) {
       return "Tu";
     }
-    return `Jucător ${player.userId.slice(-4)}`;
+    return `Jucător ${userName.slice(-4)}`;
+  };
+
+  const getUserName = (player: PlayerResponse) => {
+    return player.userName || getPlayerName(player, player.userName || "");
   };
 
   return (
@@ -56,8 +60,9 @@ const PlayerList: React.FC<PlayerListProps> = ({
         {players.map((player) => {
           const status = getPlayerStatus(player);
           const icon = getPlayerIcon(player);
-          const name = getPlayerName(player);
-
+          const name = getPlayerName(player, player.userName || "");
+          const userName =
+            player.userName || getPlayerName(player, player.userName || "");
           return (
             <div
               key={player.id}

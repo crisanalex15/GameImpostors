@@ -31,6 +31,7 @@ namespace Backend.Services.Game
         Task<(bool Success, string Message)> SubmitVoteAsync(Guid roundId, Guid voterId, Guid targetId);
         Task<List<Vote>> GetRoundVotesAsync(Guid roundId);
         Task<(Guid? EliminatedPlayerId, bool IsImpostorEliminated)> CalculateVotingResultsAsync(Guid roundId);
+        Task<(bool Success, string Message, int Points)> GuessWordAsync(Guid roundId, Guid userId, string guessedWord);
 
         // Game Logic
         Task<(bool Success, string Message)> EndRoundAsync(Guid roundId);

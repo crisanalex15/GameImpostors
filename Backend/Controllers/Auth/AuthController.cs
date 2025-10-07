@@ -48,7 +48,7 @@ namespace Backend.Controllers.Auth
 
                 var user = new ApplicationUser
                 {
-                    UserName = request.Email,
+                    UserName = request.Username,
                     Email = request.Email,
                     FirstName = request.FirstName,
                     LastName = request.LastName,

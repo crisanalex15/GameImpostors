@@ -68,7 +68,7 @@ namespace Backend.Models
         public bool CanStartGame()
         {
             return State == GameState.Lobby &&
-                   CurrentPlayers >= 3 &&
+                   CurrentPlayers >= 2 && // Minimum 2 players (reduced from 3)
                    Players.All(p => p.IsReady);
         }
 

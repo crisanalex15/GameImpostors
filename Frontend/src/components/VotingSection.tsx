@@ -20,6 +20,7 @@ export interface VotingSectionProps {
 const VotingSection: React.FC<VotingSectionProps> = ({
   round,
   players,
+  gameId,
   currentUserId,
   gameType,
   onVoteSubmitted,
@@ -30,6 +31,13 @@ const VotingSection: React.FC<VotingSectionProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [wordGuess, setWordGuess] = useState("");
   const [isGuessing, setIsGuessing] = useState(false);
+  const [hasGuessed, setHasGuessed] = useState(false); // Track if impostor has already guessed
+  const [guessResult, setGuessResult] = useState<{
+    success: boolean;
+    message: string;
+    points: number;
+  } | null>(null);
+  const [isReadyForNextRound, setIsReadyForNextRound] = useState(false);
 
   const handleSubmitVote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,17 +59,25 @@ const VotingSection: React.FC<VotingSectionProps> = ({
 
   const handleWordGuess = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!wordGuess.trim() || isGuessing) return;
+    if (!wordGuess.trim() || isGuessing || hasGuessed) return;
 
     setIsGuessing(true);
+    setHasGuessed(true); // Mark that impostor has used their guess attempt
     try {
-      // Aici ar trebui să fie un API call pentru ghicirea cuvântului
-      // await gameApi.guessWord(round.id, { word: wordGuess.trim() });
-      alert(`Ai ghicit cuvântul: "${wordGuess.trim()}"! +50 puncte!`);
+      const result = await gameApi.guessWord(round.id, wordGuess.trim());
+      setGuessResult({
+        success: true,
+        message: result.message,
+        points: result.points,
+      });
       setWordGuess("");
       onVoteSubmitted(); // Actualizează starea jocului
     } catch (err: any) {
-      alert(err.response?.data?.message || "Eroare la ghicirea cuvântului");
+      setGuessResult({
+        success: false,
+        message: err.response?.data?.message || "Eroare la ghicirea cuvântului",
+        points: 0,
+      });
     } finally {
       setIsGuessing(false);
     }
@@ -90,9 +106,39 @@ const VotingSection: React.FC<VotingSectionProps> = ({
     return eliminatedPlayer && eliminatedPlayer.userId === currentUserId;
   };
 
+  const getPlayerUserName = (playerId: string) => {
+    const player = players.find((p) => p.id === playerId);
+    return player?.userName || getPlayerName(playerId);
+  };
+
   const getPlayerIcon = (player: PlayerResponse) => {
     if (player.isEliminated) return "💀";
     return "👤";
+  };
+
+  const getReadyForNextRoundCount = () => {
+    // Count all players who are ready (including eliminated ones who are spectating)
+    const readyPlayers = players.filter((p) => p.isReady);
+    const totalPlayers = players.length; // All players, including eliminated
+    return { ready: readyPlayers.length, total: totalPlayers };
+  };
+
+  const handleReadyForNextRound = async () => {
+    if (isReadyForNextRound) return; // Already ready
+
+    setIsReadyForNextRound(true);
+
+    try {
+      // Set player as ready
+      const response = await gameApi.setReady(gameId, true);
+      console.log("Player set as ready, updated game state:", response);
+
+      // The polling in GamePage will detect when all players are ready
+      // and automatically trigger the next round
+    } catch (error) {
+      console.error("Error setting ready for next round:", error);
+      setIsReadyForNextRound(false);
+    }
   };
 
   const getVotingResults = () => {
@@ -128,8 +174,8 @@ const VotingSection: React.FC<VotingSectionProps> = ({
     return {
       eliminatedPlayer: mostVotedPlayer,
       wasImpostor: mostVotedPlayer.isImpostor,
-      crewmatePoints: mostVotedPlayer.isImpostor ? 100 : 0,
-      impostorPoints: mostVotedPlayer.isImpostor ? 50 : 0,
+      crewmatePoints: mostVotedPlayer.isImpostor ? 100 : 0, // Crewmates get 100 if impostor was voted
+      impostorPoints: mostVotedPlayer.isImpostor ? 50 : 100, // Impostor gets 50 (guessing) if voted, or 100 if crewmate was voted
     };
   };
 
@@ -184,7 +230,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({
                       {getPlayerIcon(player)}
                     </div>
                     <div style={{ fontWeight: "bold" }}>
-                      {getPlayerName(player.id)}
+                      {getPlayerUserName(player.id)}
                     </div>
                     <div style={{ fontSize: "0.9rem", color: "#666" }}>
                       Scor: {player.score}
@@ -195,7 +241,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({
             </div>
           </div>
 
-          <div className="form-group">
+          {/* <div className="form-group">
             <label className="form-label">Motivul votului (opțional):</label>
             <textarea
               className="form-input"
@@ -205,7 +251,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({
               rows={3}
               style={{ resize: "vertical" }}
             />
-          </div>
+          </div> */}
 
           <button
             type="submit"
@@ -251,7 +297,8 @@ const VotingSection: React.FC<VotingSectionProps> = ({
                 }}
               >
                 <p style={{ fontWeight: "bold", marginBottom: "5px" }}>
-                  {getPlayerName(vote.voterId)} → {getPlayerName(vote.targetId)}
+                  {getPlayerUserName(vote.voterId)} →{" "}
+                  {getPlayerUserName(vote.targetId)}
                 </p>
                 {vote.reason && (
                   <p style={{ fontSize: "0.9rem", color: "#666", margin: 0 }}>
@@ -263,17 +310,6 @@ const VotingSection: React.FC<VotingSectionProps> = ({
           </div>
         </div>
       )}
-
-      {/* Voting Instructions */}
-      <div
-        style={{
-          marginTop: "20px",
-          padding: "15px",
-          background: "rgba(0, 0, 0, 0.05)",
-          borderRadius: "8px",
-          textAlign: "center",
-        }}
-      ></div>
 
       {/* Voting Results and Score Display */}
       {round.state === RoundState.Ended && getScoreInfo() && (
@@ -301,12 +337,15 @@ const VotingSection: React.FC<VotingSectionProps> = ({
           >
             <h4 style={{ marginBottom: "10px" }}>
               {getScoreInfo()?.eliminatedPlayer.isImpostor
-                ? "👹 Impostor eliminat!"
-                : "👤 Crewmate eliminat"}
+                ? "👹 Impostor găsit!"
+                : "👤 Crewmate votat (greșit)"}
             </h4>
             <p style={{ fontSize: "1.1rem", margin: "0" }}>
-              {getPlayerName(getScoreInfo()?.eliminatedPlayer.id || "")} a fost
-              eliminat
+              {getPlayerUserName(getScoreInfo()?.eliminatedPlayer.id || "")} (
+              {getScoreInfo()?.eliminatedPlayer.isImpostor
+                ? "Impostor"
+                : "Crewmate"}
+              ) a fost votat
             </p>
           </div>
 
@@ -326,34 +365,61 @@ const VotingSection: React.FC<VotingSectionProps> = ({
                 flexWrap: "wrap",
               }}
             >
-              <div style={{ margin: "10px" }}>
-                <div
-                  style={{
-                    fontSize: "1.2rem",
-                    fontWeight: "bold",
-                    color: "#28a745",
-                  }}
-                >
-                  +{getScoreInfo()?.crewmatePoints} puncte
-                </div>
-                <div style={{ fontSize: "0.9rem" }}>Crewmates</div>
-              </div>
+              {/* Show crewmates points if impostor was voted */}
               {getScoreInfo()?.wasImpostor && (
                 <div style={{ margin: "10px" }}>
                   <div
                     style={{
                       fontSize: "1.2rem",
                       fontWeight: "bold",
-                      color: "#ffc107",
+                      color: "#28a745",
                     }}
                   >
-                    +{getScoreInfo()?.impostorPoints} puncte
-                  </div>
-                  <div style={{ fontSize: "0.9rem" }}>
-                    Impostor (dacă ghiceste cuvântul)
+                    +{getScoreInfo()?.crewmatePoints} puncte
                   </div>
                 </div>
               )}
+
+              {/* Show points when crewmate was voted */}
+              {!getScoreInfo()?.wasImpostor &&
+                (() => {
+                  const currentPlayer = players.find(
+                    (p) => p.userId === currentUserId
+                  );
+                  const isCurrentUserImpostor = currentPlayer?.isImpostor;
+
+                  if (isCurrentUserImpostor) {
+                    // Impostor gets 100 points
+                    return (
+                      <div style={{ margin: "10px" }}>
+                        <div
+                          style={{
+                            fontSize: "1.2rem",
+                            fontWeight: "bold",
+                            color: "#ffc107",
+                          }}
+                        >
+                          +{getScoreInfo()?.impostorPoints} puncte
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    // Crewmate gets 0 points (they voted wrong)
+                    return (
+                      <div style={{ margin: "10px" }}>
+                        <div
+                          style={{
+                            fontSize: "1.2rem",
+                            fontWeight: "bold",
+                            color: "#dc3545",
+                          }}
+                        >
+                          +0 puncte
+                        </div>
+                      </div>
+                    );
+                  }
+                })()}
             </div>
           </div>
 
@@ -370,53 +436,117 @@ const VotingSection: React.FC<VotingSectionProps> = ({
                 🎲 Faza Finală - Ghicirea Cuvântului
               </h4>
               <p style={{ margin: "0 0 15px 0", fontSize: "1rem" }}>
-                Impostorul eliminat poate încerca să ghicească cuvântul pentru a
+                Impostorul votat poate încerca să ghicească cuvântul pentru a
                 câștiga 50 de puncte!
               </p>
 
-              {isCurrentUserEliminatedImpostor() && canGuessWord && (
-                <form onSubmit={handleWordGuess} style={{ marginTop: "15px" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "10px",
-                      alignItems: "center",
-                    }}
+              {isCurrentUserEliminatedImpostor() &&
+                canGuessWord &&
+                !hasGuessed && (
+                  <form
+                    onSubmit={handleWordGuess}
+                    style={{ marginTop: "15px" }}
                   >
-                    <input
-                      type="text"
-                      value={wordGuess}
-                      onChange={(e) => setWordGuess(e.target.value)}
-                      placeholder="Introdu cuvântul..."
+                    <div
                       style={{
-                        flex: 1,
-                        padding: "10px",
-                        borderRadius: "5px",
-                        border: "1px solid #ffc107",
-                        fontSize: "1rem",
-                        background: "rgba(255, 255, 255, 0.9)",
-                      }}
-                      disabled={isGuessing}
-                    />
-                    <button
-                      type="submit"
-                      disabled={!wordGuess.trim() || isGuessing}
-                      style={{
-                        padding: "10px 20px",
-                        background: isGuessing ? "#6c757d" : "#ffc107",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "5px",
-                        fontSize: "1rem",
-                        fontWeight: "bold",
-                        cursor: isGuessing ? "not-allowed" : "pointer",
-                        transition: "all 0.3s ease",
+                        display: "flex",
+                        gap: "10px",
+                        alignItems: "center",
                       }}
                     >
-                      {isGuessing ? "Se procesează..." : "Ghiceste!"}
-                    </button>
+                      <input
+                        type="text"
+                        value={wordGuess}
+                        onChange={(e) => setWordGuess(e.target.value)}
+                        placeholder="Introdu cuvântul... (o singură încercare!)"
+                        style={{
+                          flex: 1,
+                          padding: "10px",
+                          borderRadius: "5px",
+                          border: "1px solid #ffc107",
+                          fontSize: "1rem",
+                          background: "rgba(255, 255, 255, 0.9)",
+                        }}
+                        disabled={isGuessing}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!wordGuess.trim() || isGuessing}
+                        style={{
+                          padding: "10px 20px",
+                          background: isGuessing ? "#6c757d" : "#ffc107",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "5px",
+                          fontSize: "1rem",
+                          fontWeight: "bold",
+                          cursor: isGuessing ? "not-allowed" : "pointer",
+                          transition: "all 0.3s ease",
+                        }}
+                      >
+                        {isGuessing ? "Se procesează..." : "Ghicește!"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+              {/* Show message if impostor has already guessed */}
+              {isCurrentUserEliminatedImpostor() &&
+                canGuessWord &&
+                hasGuessed &&
+                !guessResult && (
+                  <div
+                    style={{
+                      marginTop: "15px",
+                      padding: "15px",
+                      borderRadius: "8px",
+                      background: "rgba(108, 117, 125, 0.2)",
+                      border: "2px solid #6c757d",
+                      color: "white",
+                      textAlign: "center",
+                    }}
+                  >
+                    <p style={{ margin: 0, fontSize: "1rem" }}>
+                      ⏳ Așteptăm rezultatul...
+                    </p>
                   </div>
-                </form>
+                )}
+
+              {/* Rezultatul ghicirii */}
+              {guessResult && (
+                <div
+                  style={{
+                    marginTop: "15px",
+                    padding: "15px",
+                    borderRadius: "8px",
+                    background: guessResult.success
+                      ? "rgba(40, 167, 69, 0.2)"
+                      : "rgba(220, 53, 69, 0.2)",
+                    border: `2px solid ${
+                      guessResult.success ? "#28a745" : "#dc3545"
+                    }`,
+                    color: "white",
+                  }}
+                >
+                  <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
+                    {guessResult.success ? "✅ Corect!" : "❌ Greșit!"}
+                  </div>
+                  <div style={{ fontSize: "1rem", marginTop: "5px" }}>
+                    {guessResult.message}
+                  </div>
+                  {guessResult.points > 0 && (
+                    <div
+                      style={{
+                        fontSize: "1.3rem",
+                        fontWeight: "bold",
+                        marginTop: "10px",
+                        color: "#ffd700",
+                      }}
+                    >
+                      +{guessResult.points} puncte! 🎉
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -424,7 +554,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({
           {/* Buton pentru runda următoare */}
           <div style={{ marginTop: "20px" }}>
             <button
-              onClick={onNextRound}
+              onClick={handleReadyForNextRound}
               style={{
                 padding: "15px 30px",
                 background: "linear-gradient(45deg, #28a745, #20c997)",
@@ -448,7 +578,9 @@ const VotingSection: React.FC<VotingSectionProps> = ({
                   "0 4px 15px rgba(40, 167, 69, 0.3)";
               }}
             >
-              🎮 Runda Următoare
+              {isReadyForNextRound ? "✓ Gata" : "🎮 Runda Următoare"} (
+              {getReadyForNextRoundCount().ready}/
+              {getReadyForNextRoundCount().total})
             </button>
           </div>
         </div>

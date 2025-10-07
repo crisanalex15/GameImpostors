@@ -2,6 +2,7 @@ using Backend.Areas.Identity.Data;
 using Backend.Models;
 using Backend.Models.Questions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using static Backend.Models.GameObject;
 
 namespace Backend.Services.Game
@@ -10,11 +11,13 @@ namespace Backend.Services.Game
     {
         private readonly AuthDbContext _context;
         private readonly Random _random;
+        private readonly ILogger<GameService> _logger;
 
-        public GameService(AuthDbContext context)
+        public GameService(AuthDbContext context, ILogger<GameService> logger)
         {
             _context = context;
             _random = new Random();
+            _logger = logger;
         }
 
         #region Lobby Management
@@ -150,6 +153,18 @@ namespace Backend.Services.Game
                     return (false, "You are not in this game!");
                 }
 
+                // Remove all related entities first to avoid foreign key constraint violations
+                var playerVotes = await _context.Votes
+                    .Where(v => v.VoterId == player.Id || v.TargetId == player.Id)
+                    .ToListAsync();
+                _context.Votes.RemoveRange(playerVotes);
+
+                var playerAnswers = await _context.Answers
+                    .Where(a => a.PlayerId == player.Id)
+                    .ToListAsync();
+                _context.Answers.RemoveRange(playerAnswers);
+
+                // Now remove the player
                 _context.Players.Remove(player);
                 game.CurrentPlayers--;
 
@@ -194,14 +209,60 @@ namespace Backend.Services.Game
                 }
 
                 var game = await GetGameAsync(gameId);
-                if (game == null || game.State != GameObject.GameState.Lobby)
+                if (game == null)
                 {
-                    return (false, "Cannot change ready status - game is not in lobby!");
+                    return (false, "Game not found!");
+                }
+
+                // Allow ready status change in Lobby (before game starts) and in Game (between rounds)
+                if (game.State != GameObject.GameState.Lobby && game.State != GameObject.GameState.Game)
+                {
+                    return (false, "Cannot change ready status - game is not active!");
                 }
 
                 player.IsReady = isReady;
                 game.UpdateTimestamp();
                 await _context.SaveChangesAsync();
+
+                // Check if all players are ready and game is active (not in lobby)
+                if (game.State == GameObject.GameState.Game && isReady)
+                {
+                    var allReady = game.Players.All(p => p.IsReady);
+                    if (allReady)
+                    {
+                        _logger.LogInformation($"All players ready! Starting next round for game {gameId}");
+
+                        // Reset all players' ready status
+                        foreach (var p in game.Players)
+                        {
+                            p.IsReady = false;
+                        }
+
+                        // Get current round to end it
+                        var currentRound = await GetCurrentRoundAsync(gameId);
+                        if (currentRound != null)
+                        {
+                            await EndRoundAsync(currentRound.Id);
+                        }
+
+                        // Increment round number
+                        game.RoundNumber++;
+
+                        if (game.RoundNumber > game.MaxRounds)
+                        {
+                            // Game is over - end game (leaderboard will show)
+                            await EndGameAsync(gameId);
+                            _logger.LogInformation($"Game {gameId} ended! Final scores will be displayed.");
+                            return (true, "All players ready - Game ended!");
+                        }
+                        else
+                        {
+                            // Create new round
+                            await CreateRoundAsync(gameId);
+                            return (true, $"All players ready - Round {game.RoundNumber} started!");
+                        }
+                    }
+                }
 
                 return (true, $"Player ready status set to {isReady}!");
             }
@@ -313,17 +374,52 @@ namespace Backend.Services.Game
                     return (false, null, "Game is not active!");
                 }
 
-                // Get impostor for this round
-                var impostor = game.Players.FirstOrDefault(p => p.IsImpostor);
-                if (impostor == null)
+                // Reset all players' impostor status
+                _logger.LogInformation($"Resetting impostor status for {game.Players.Count} players");
+                foreach (var player in game.Players)
                 {
-                    return (false, null, "No impostor found!");
+                    player.IsImpostor = false;
+                }
+
+                // Determine number of impostors for this round
+                int impostorCount;
+                if (game.ImpostorCount == 0)
+                {
+                    // Random: 0 to all players
+                    impostorCount = _random.Next(0, game.Players.Count + 1);
+                    _logger.LogInformation($"Random impostor count: {impostorCount} (max: {game.Players.Count}) for Round {game.RoundNumber}");
+                }
+                else
+                {
+                    // Fixed number, capped at total players
+                    impostorCount = Math.Min(game.ImpostorCount, game.Players.Count);
+                    _logger.LogInformation($"Fixed impostor count: {impostorCount} for Round {game.RoundNumber}");
+                }
+
+                // Select impostors randomly
+                var selectedImpostors = game.Players.OrderBy(x => _random.Next()).Take(impostorCount).ToList();
+                foreach (var impostor in selectedImpostors)
+                {
+                    impostor.IsImpostor = true;
+                    _logger.LogInformation($"Selected impostor: Player {impostor.Id} (User: {impostor.UserId}) for Round {game.RoundNumber}");
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Use the first impostor for the ImpostorId field (for backward compatibility)
+                // If no impostors, use the first player's ID (edge case: 0 impostors)
+                var firstImpostor = selectedImpostors.FirstOrDefault();
+                var impostorId = firstImpostor?.Id ?? game.Players.FirstOrDefault()?.Id ?? Guid.Empty;
+
+                if (impostorId == Guid.Empty)
+                {
+                    return (false, null, "No players found to create round!");
                 }
 
                 var round = new Round
                 {
                     GameId = gameId,
-                    ImpostorId = impostor.Id,
+                    ImpostorId = impostorId,
                     RoundNumber = game.RoundNumber,
                     State = Round.RoundState.Active,
                     TimeLimit = 0, // No timer
@@ -530,19 +626,36 @@ namespace Backend.Services.Game
 
                 await _context.SaveChangesAsync();
 
-                // Check if majority has voted (more than half of active players)
+                // Check if ALL active players have voted
                 var game = await GetGameAsync(round.GameId);
                 if (game != null)
                 {
                     var activePlayers = game.Players.Where(p => !p.IsEliminated).Count();
                     var votesCount = await _context.Votes.CountAsync(v => v.RoundId == roundId);
-                    var majorityNeeded = (activePlayers / 2) + 1;
 
-                    if (votesCount >= majorityNeeded)
+                    // Wait for ALL active players to vote
+                    if (votesCount >= activePlayers)
                     {
-                        // Calculate voting results and end round
+                        // Calculate voting results
                         var (eliminatedPlayerId, isImpostorEliminated) = await CalculateVotingResultsAsync(roundId);
-                        await EndRoundAsync(roundId);
+
+                        // If tie (no one eliminated), reset votes and restart voting
+                        if (eliminatedPlayerId == null)
+                        {
+                            // Remove all votes for this round
+                            var votesToRemove = await _context.Votes
+                                .Where(v => v.RoundId == roundId)
+                                .ToListAsync();
+                            _context.Votes.RemoveRange(votesToRemove);
+                            await _context.SaveChangesAsync();
+
+                            return (true, "Voting resulted in a tie! Please vote again.");
+                        }
+                        else
+                        {
+                            // Someone was eliminated, end the round
+                            await EndRoundAsync(roundId);
+                        }
                     }
                 }
 
@@ -598,14 +711,107 @@ namespace Backend.Services.Game
 
             var isImpostorEliminated = eliminatedPlayer?.IsImpostor ?? false;
 
-            // Mark player as eliminated
+            // Award points (NO ONE is actually eliminated from the game)
             if (eliminatedPlayer != null)
             {
-                eliminatedPlayer.IsEliminated = true;
+                // Don't set IsEliminated = true - players continue in next rounds
+
+                // Award points
+                var round = await _context.Rounds
+                    .Include(r => r.Game)
+                    .ThenInclude(g => g.Players)
+                    .FirstOrDefaultAsync(r => r.Id == roundId);
+
+                if (round?.Game != null)
+                {
+                    if (isImpostorEliminated)
+                    {
+                        // Crewmates found the impostor - give them 100 points each
+                        // Give points to all crewmates (players who are NOT impostors in this round)
+                        var crewmates = round.Game.Players.Where(p => !p.IsImpostor).ToList();
+                        _logger.LogInformation($"Awarding 100 points to {crewmates.Count} crewmates (impostor was voted)");
+                        foreach (var crewmate in crewmates)
+                        {
+                            _logger.LogInformation($"Player {crewmate.Id}: Score {crewmate.Score} -> {crewmate.Score + 100}");
+                            crewmate.Score += 100;
+                        }
+                    }
+                    else
+                    {
+                        // Wrong player voted - impostor gets 100 points
+                        var impostors = round.Game.Players.Where(p => p.IsImpostor).ToList();
+                        _logger.LogInformation($"Awarding 100 points to {impostors.Count} impostors (crewmate was voted)");
+                        foreach (var impostor in impostors)
+                        {
+                            _logger.LogInformation($"Impostor {impostor.Id}: Score {impostor.Score} -> {impostor.Score + 100}");
+                            impostor.Score += 100;
+                        }
+                    }
+                }
+
                 await _context.SaveChangesAsync();
             }
 
             return (eliminatedPlayerId, isImpostorEliminated);
+        }
+
+        public async Task<(bool Success, string Message, int Points)> GuessWordAsync(Guid roundId, Guid userId, string guessedWord)
+        {
+            try
+            {
+                var round = await _context.Rounds
+                    .Include(r => r.WordHidden)
+                    .Include(r => r.Game)
+                        .ThenInclude(g => g.Players)
+                    .FirstOrDefaultAsync(r => r.Id == roundId);
+
+                if (round == null)
+                {
+                    return (false, "Round not found!", 0);
+                }
+
+                if (round.WordHidden == null)
+                {
+                    return (false, "This round doesn't have a word to guess!", 0);
+                }
+
+                // Find the player
+                var player = round.Game?.Players.FirstOrDefault(p => p.UserId == userId);
+                if (player == null)
+                {
+                    return (false, "Player not found in this game!", 0);
+                }
+
+                // Check if player is the impostor who was voted
+                if (!player.IsImpostor)
+                {
+                    return (false, "Only the voted impostor can guess the word!", 0);
+                }
+
+                // Check if the word matches (case-insensitive)
+                var normalizedGuess = guessedWord.Trim().ToLower();
+                var normalizedCorrectWord = round.WordHidden.Word.Trim().ToLower();
+
+                if (normalizedGuess == normalizedCorrectWord)
+                {
+                    // Correct guess! Award 50 points
+                    player.Score += 50;
+                    await _context.SaveChangesAsync();
+
+                    _logger.LogInformation($"Player {player.Id} guessed the word correctly! +50 points. Total: {player.Score}");
+                    return (true, $"Corect! Cuvântul era '{round.WordHidden.Word}'. +50 puncte!", 50);
+                }
+                else
+                {
+                    _logger.LogInformation($"Player {player.Id} guessed incorrectly: '{guessedWord}' (correct: '{round.WordHidden.Word}')");
+                    return (false, $"Greșit! Cuvântul corect era '{round.WordHidden.Word}'.", 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error guessing word: {ex.Message}");
+                return (false, $"Error: {ex.Message}", 0);
+            }
         }
 
         #endregion
@@ -627,25 +833,23 @@ namespace Backend.Services.Game
 
                 round.EndRound();
 
+                // Reset all players' ready status for next round
+                if (round.Game != null)
+                {
+                    foreach (var player in round.Game.Players)
+                    {
+                        player.IsReady = false;
+                    }
+                }
+
                 // Check if game should end
                 var shouldEndGame = await CheckGameEndConditionsAsync(round.GameId);
                 if (shouldEndGame)
                 {
                     await EndGameAsync(round.GameId);
                 }
-                else if (round.Game != null)
-                {
-                    // Move to next round
-                    round.Game.RoundNumber++;
-                    if (round.Game.RoundNumber <= round.Game.MaxRounds)
-                    {
-                        await CreateRoundAsync(round.GameId);
-                    }
-                    else
-                    {
-                        await EndGameAsync(round.GameId);
-                    }
-                }
+                // Don't automatically create next round - wait for explicit trigger
+                // Frontend will show results, word guessing, and "Next Round" button
 
                 await _context.SaveChangesAsync();
                 return (true, "Round ended successfully!");
@@ -719,21 +923,33 @@ namespace Backend.Services.Game
             if (game == null) return;
 
             // Reset all players to not impostor
+            _logger.LogInformation($"[First Round] Resetting impostor status for {players.Count} players");
             foreach (var player in players)
             {
                 player.IsImpostor = false;
             }
 
-            // Calculate random number of impostors (1-3, but not more than half the players)
-            var maxImpostors = Math.Min(3, players.Count / 2);
-            var impostorCount = _random.Next(1, maxImpostors + 1);
+            // Determine number of impostors
+            int impostorCount;
+            if (game.ImpostorCount == 0)
+            {
+                // Random: 0 to all players
+                impostorCount = _random.Next(0, players.Count + 1);
+                _logger.LogInformation($"[First Round] Random impostor count: {impostorCount} (max: {players.Count})");
+            }
+            else
+            {
+                // Fixed number, capped at total players
+                impostorCount = Math.Min(game.ImpostorCount, players.Count);
+                _logger.LogInformation($"[First Round] Fixed impostor count: {impostorCount}");
+            }
 
-            // Select random impostor(s)
-            var selectedImpostors = players.OrderBy(x => _random.Next()).Take(impostorCount);
-
+            // Select impostors randomly
+            var selectedImpostors = players.OrderBy(x => _random.Next()).Take(impostorCount).ToList();
             foreach (var impostor in selectedImpostors)
             {
                 impostor.IsImpostor = true;
+                _logger.LogInformation($"[First Round] Selected impostor: Player {impostor.Id} (User: {impostor.UserId})");
             }
 
             await _context.SaveChangesAsync();

@@ -160,7 +160,7 @@ export const gameApi = {
     gameId: string,
     isReady: boolean
   ): Promise<ApiResponse<GameStateResponse>> => {
-    const response = await api.post(`/Game/${gameId}/ready`, isReady);
+    const response = await api.post(`/Game/${gameId}/ready`, { isReady });
     return response.data;
   },
 
@@ -169,6 +169,14 @@ export const gameApi = {
     gameId: string
   ): Promise<ApiResponse<GameStateResponse>> => {
     const response = await api.post(`/Game/${gameId}/start`);
+    return response.data;
+  },
+
+  // Start next round
+  nextRound: async (
+    gameId: string
+  ): Promise<ApiResponse<GameStateResponse>> => {
+    const response = await api.post(`/Game/${gameId}/next-round`);
     return response.data;
   },
 
@@ -194,6 +202,17 @@ export const gameApi = {
     request: SubmitVoteRequest
   ): Promise<ApiResponse<GameStateResponse>> => {
     const response = await api.post(`/Game/round/${roundId}/vote`, request);
+    return response.data;
+  },
+
+  // Guess the word (impostor only)
+  guessWord: async (
+    roundId: string,
+    word: string
+  ): Promise<{ message: string; points: number }> => {
+    const response = await api.post(`/Game/round/${roundId}/guess-word`, {
+      word,
+    });
     return response.data;
   },
 };

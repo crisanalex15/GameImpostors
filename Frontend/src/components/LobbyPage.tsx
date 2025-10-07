@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { gameApi } from "../services/api";
 import { CreateGameRequest, GameType } from "../types/game";
@@ -15,15 +15,11 @@ const LobbyPage: React.FC = () => {
 
   const [createGameData, setCreateGameData] = useState<CreateGameRequest>({
     gameType: GameType.WordHidden,
-    maxPlayers: 6,
+    maxPlayers: 20, // Maximum 20 players allowed
     impostorCount: 1,
     timerDuration: 120,
     maxRounds: 3,
   });
-
-  useEffect(() => {
-    console.log("User in LobbyPage:", user);
-  }, [user]);
 
   const handleCreateGame = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,29 +134,6 @@ const LobbyPage: React.FC = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">
-                    Numărul maxim de jucători
-                  </label>
-                  <select
-                    className="form-select"
-                    value={createGameData.maxPlayers}
-                    onChange={(e) =>
-                      setCreateGameData({
-                        ...createGameData,
-                        maxPlayers: parseInt(e.target.value),
-                      })
-                    }
-                  >
-                    <option value={3}>3 jucători</option>
-                    <option value={4}>4 jucători</option>
-                    <option value={5}>5 jucători</option>
-                    <option value={6}>6 jucători</option>
-                    <option value={8}>8 jucători</option>
-                    <option value={10}>10 jucători</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
                   <label className="form-label">Numărul de impostori</label>
                   <select
                     className="form-select"
@@ -175,30 +148,11 @@ const LobbyPage: React.FC = () => {
                     <option value={1}>1 impostor</option>
                     <option value={2}>2 impostori</option>
                     <option value={3}>3 impostori</option>
-                    <option value={4}>Random</option>
+                    <option value={0}>Random (0 până la toți jucătorii)</option>
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Durata rundei (secunde)</label>
-                  <select
-                    className="form-select"
-                    value={createGameData.timerDuration}
-                    onChange={(e) =>
-                      setCreateGameData({
-                        ...createGameData,
-                        timerDuration: parseInt(e.target.value),
-                      })
-                    }
-                  >
-                    <option value={60}>1 minut</option>
-                    <option value={120}>2 minute</option>
-                    <option value={180}>3 minute</option>
-                    <option value={300}>5 minute</option>
-                  </select>
-                </div>
-
-                {/* <div className="form-group">
                   <label className="form-label">Numărul de runde</label>
                   <select
                     className="form-select"
@@ -214,8 +168,9 @@ const LobbyPage: React.FC = () => {
                     <option value={2}>2 runde</option>
                     <option value={3}>3 runde</option>
                     <option value={5}>5 runde</option>
+                    <option value={10}>10 runde</option>
                   </select>
-                </div> */}
+                </div>
 
                 <button
                   type="submit"

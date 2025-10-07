@@ -40,6 +40,7 @@ export interface SubmitVoteRequest {
 export interface PlayerResponse {
   id: string;
   userId: string;
+  userName?: string;
   isImpostor: boolean;
   isReady: boolean;
   isEliminated: boolean;

@@ -106,6 +106,26 @@ const GamePage: React.FC = () => {
     }
   };
 
+  const handleNextRound = async () => {
+    if (!gameId) return;
+
+    console.log("Starting next round for game:", gameId);
+
+    try {
+      const response = await gameApi.nextRound(gameId);
+      console.log("Next round response:", response);
+      if (response.game) {
+        setGameState(response.game);
+        console.log("Game state updated:", response.game);
+      }
+    } catch (err: any) {
+      console.error("Error starting next round:", err);
+      setError(
+        err.response?.data?.message || "Eroare la pornirea rundei următoare"
+      );
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -359,24 +379,183 @@ const GamePage: React.FC = () => {
           round={gameState.currentRound}
           gameType={gameState.type}
           gameId={gameId!}
+          hostId={gameState.hostId}
+          currentUserId={user?.id}
+          currentRoundNumber={gameState.roundNumber}
+          maxRounds={gameState.maxRounds}
           players={gameState.players}
           onStateUpdate={loadGameState}
           onNewGame={handleNewGame}
           onLeaveLobby={handleLeaveGame}
+          onNextRound={handleNextRound}
         />
       )}
 
-      {/* Voting Section - Always visible */}
-      {gameState.currentRound?.state === RoundState.Voting && (
-        <VotingSection
-          round={gameState.currentRound}
-          players={gameState.players}
-          gameId={gameId!}
-          currentUserId={user?.id}
-          gameType={gameState.type}
-          onVoteSubmitted={loadGameState}
-          onNextRound={loadGameState}
-        />
+      {/* Voting Section - Show during Voting and Ended round states (but not game ended) */}
+      {gameState.state !== GameState.Ended &&
+        gameState.currentRound &&
+        (gameState.currentRound.state === RoundState.Voting ||
+          gameState.currentRound.state === RoundState.Ended) && (
+          <VotingSection
+            round={gameState.currentRound}
+            players={gameState.players}
+            gameId={gameId!}
+            currentUserId={user?.id}
+            gameType={gameState.type}
+            onVoteSubmitted={loadGameState}
+            onNextRound={handleNextRound}
+          />
+        )}
+
+      {/* Final Leaderboard - Show when game is ended */}
+      {gameState.state === GameState.Ended && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "30px",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white",
+            borderRadius: "15px",
+            border: "2px solid rgba(255, 255, 255, 0.3)",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+            width: "100%",
+            borderTopLeftRadius: "0px",
+            borderTopRightRadius: "0px",
+          }}
+        >
+          <h2 style={{ marginBottom: "30px", fontSize: "2rem" }}>
+            🏆 Jocul S-a Terminat!
+          </h2>
+
+          {/* Final Leaderboard */}
+          <div style={{ marginBottom: "30px" }}>
+            {gameState.players
+              .sort((a, b) => (b.score || 0) - (a.score || 0))
+              .map((player, index) => (
+                <div
+                  key={player.id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "15px 25px",
+                    margin: "10px 0",
+                    background:
+                      index === 0
+                        ? "rgba(255, 215, 0, 0.3)"
+                        : "rgba(255, 255, 255, 0.2)",
+                    borderRadius: "12px",
+                    border:
+                      index === 0
+                        ? "2px solid #ffd700"
+                        : "1px solid rgba(255, 255, 255, 0.3)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "15px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "1.5rem",
+                        fontWeight: "bold",
+                        color:
+                          index === 0
+                            ? "#ffd700"
+                            : index === 1
+                            ? "#c0c0c0"
+                            : index === 2
+                            ? "#cd7f32"
+                            : "white",
+                      }}
+                    >
+                      {index === 0
+                        ? "🥇"
+                        : index === 1
+                        ? "🥈"
+                        : index === 2
+                        ? "🥉"
+                        : `${index + 1}.`}
+                    </div>
+                    <div style={{ textAlign: "left" }}>
+                      <div style={{ fontWeight: "bold", fontSize: "1.2rem" }}>
+                        {player.userName || `Jucător ${player.id.slice(-4)}`}
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "bold",
+                      color: index === 0 ? "#ffd700" : "white",
+                    }}
+                  >
+                    {player.score || 0} pts
+                  </div>
+                </div>
+              ))}
+          </div>
+
+          {/* Action Buttons */}
+          <div
+            style={{
+              display: "flex",
+              gap: "15px",
+              justifyContent: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            {user?.id === gameState.hostId && (
+              <button
+                onClick={handleNewGame}
+                style={{
+                  padding: "15px 30px",
+                  fontSize: "1.1rem",
+                  background: "rgba(40, 167, 69, 0.9)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "rgba(40, 167, 69, 1)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "rgba(40, 167, 69, 0.9)")
+                }
+              >
+                🎮 Meci Nou
+              </button>
+            )}
+            <button
+              onClick={handleLeaveGame}
+              style={{
+                padding: "15px 30px",
+                fontSize: "1.1rem",
+                background: "rgba(220, 53, 69, 0.9)",
+                color: "white",
+                border: "none",
+                borderRadius: "10px",
+                cursor: "pointer",
+                fontWeight: "bold",
+                transition: "all 0.3s ease",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "rgba(220, 53, 69, 1)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "rgba(220, 53, 69, 0.9)")
+              }
+            >
+              🚪 Părăsește Lobby
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

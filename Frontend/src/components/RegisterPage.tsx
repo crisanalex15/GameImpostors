@@ -5,6 +5,7 @@ import axios from "axios";
 
 const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
+    username: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -46,6 +47,7 @@ const RegisterPage: React.FC = () => {
       const response = await axios.post(
         "http://localhost:5001/api/Auth/register",
         {
+          username: formData.username,
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
@@ -90,6 +92,19 @@ const RegisterPage: React.FC = () => {
         </div>
 
         <form onSubmit={handleRegister}>
+          <div className="form-group">
+            <label className="form-label">Username</label>
+            <input
+              type="text"
+              className="form-input"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              placeholder="Alege un username"
+              required
+            />
+          </div>
+
           <div className="form-group">
             <label className="form-label">Prenume</label>
             <input

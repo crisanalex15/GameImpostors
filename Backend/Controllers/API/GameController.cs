@@ -130,7 +130,7 @@ namespace Backend.Controllers.API
 
         // Set a player ready
         [HttpPost("{gameId}/ready")]
-        public async Task<IActionResult> SetReady(Guid gameId, [FromBody] bool isReady)
+        public async Task<IActionResult> SetReady(Guid gameId, [FromBody] SetReadyRequest request)
         {
             try
             {
@@ -141,7 +141,7 @@ namespace Backend.Controllers.API
                 }
 
                 var userId = Guid.Parse(user.Id);
-                var (success, message) = await _gameService.SetPlayerReadyAsync(gameId, userId, isReady);
+                var (success, message) = await _gameService.SetPlayerReadyAsync(gameId, userId, request.IsReady);
 
                 if (!success)
                 {
@@ -179,6 +179,63 @@ namespace Backend.Controllers.API
 
                 var response = await BuildGameStateResponse(gameId, userId);
                 return Ok(new { message, game = response });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
+            }
+        }
+
+        // Start next round
+        [HttpPost("{gameId}/next-round")]
+        public async Task<IActionResult> NextRound(Guid gameId)
+        {
+            try
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                var userId = Guid.Parse(user.Id);
+                var game = await _gameService.GetGameAsync(gameId);
+
+                if (game == null)
+                {
+                    return BadRequest(new { message = "Game not found" });
+                }
+
+                // Check if all players are ready (no one is eliminated - all continue playing)
+                var totalPlayers = game.Players.Count;
+                var readyPlayers = game.Players.Where(p => p.IsReady).Count();
+
+                if (readyPlayers < totalPlayers)
+                {
+                    return BadRequest(new { message = $"Not all players are ready! ({readyPlayers}/{totalPlayers})" });
+                }
+
+                // Reset all players' ready status
+                foreach (var player in game.Players)
+                {
+                    player.IsReady = false;
+                }
+
+                // Increment round number
+                game.RoundNumber++;
+
+                if (game.RoundNumber > game.MaxRounds)
+                {
+                    await _gameService.EndGameAsync(gameId);
+                    var endedResponse = await BuildGameStateResponse(gameId, userId);
+                    return Ok(new { message = "Game ended!", game = endedResponse });
+                }
+
+                // Create new round
+                await _gameService.CreateRoundAsync(gameId);
+
+                var response = await BuildGameStateResponse(gameId, userId);
+                return Ok(new { message = $"Round {game.RoundNumber} started!", game = response });
             }
             catch (Exception ex)
             {
@@ -289,6 +346,33 @@ namespace Backend.Controllers.API
         #region Voting System
 
         // Submit a vote
+        [HttpPost("round/{roundId}/guess-word")]
+        public async Task<IActionResult> GuessWord(Guid roundId, [FromBody] GuessWordRequest request)
+        {
+            try
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                var userId = Guid.Parse(user.Id);
+                var (success, message, points) = await _gameService.GuessWordAsync(roundId, userId, request.Word);
+
+                if (!success)
+                {
+                    return BadRequest(new { message, points });
+                }
+
+                return Ok(new { message, points });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
+            }
+        }
+
         [HttpPost("round/{roundId}/vote")]
         public async Task<IActionResult> SubmitVote(Guid roundId, [FromBody] SubmitVoteRequest request)
         {
@@ -347,6 +431,17 @@ namespace Backend.Controllers.API
             var currentPlayer = await _gameService.GetPlayerAsync(gameId, currentUserId);
             var currentRound = await _gameService.GetCurrentRoundAsync(gameId);
 
+            // Get usernames for all players
+            var playerUserNames = new Dictionary<Guid, string>();
+            foreach (var player in game.Players)
+            {
+                var user = await _userManager.FindByIdAsync(player.UserId.ToString());
+                if (user != null)
+                {
+                    playerUserNames[player.UserId] = user.UserName ?? "Unknown";
+                }
+            }
+
             var response = new GameStateResponse
             {
                 Id = game.Id,
@@ -365,6 +460,7 @@ namespace Backend.Controllers.API
                 {
                     Id = p.Id,
                     UserId = p.UserId,
+                    UserName = playerUserNames.ContainsKey(p.UserId) ? playerUserNames[p.UserId] : "Unknown",
                     IsImpostor = p.IsImpostor,
                     IsReady = p.IsReady,
                     IsEliminated = p.IsEliminated,
