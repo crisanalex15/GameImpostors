@@ -404,7 +404,6 @@ const GamePage: React.FC = () => {
         gameState.currentRound.state === RoundState.Active && (
           <QuestionSwapDisplay
             round={gameState.currentRound}
-            currentUserId={user?.id}
             onAnswerSubmitted={loadGameState}
           />
         )}
