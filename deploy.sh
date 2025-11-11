@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}═════════════════════════════════════════════${NC}"
-echo -e "${BLUE}   🚀 AuthService - Deployment Script       ${NC}"
+echo -e "${BLUE}   🚀 GameImpostors - Deployment Script    ${NC}"
 echo -e "${BLUE}═════════════════════════════════════════════${NC}"
 
 # Verifică dacă rulează pe Ubuntu
@@ -48,6 +48,10 @@ else
     echo -e "${GREEN}✓ .NET 8.0 deja instalat${NC}"
 fi
 
+# Asigură PATH pentru dotnet tools (util pentru dotnet-ef)
+export DOTNET_ROOT=${DOTNET_ROOT:-$HOME/.dotnet}
+export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools:$HOME/.dotnet/tools
+
 # Node.js
 if ! command -v node &> /dev/null; then
     echo -e "${BLUE}→ Instalare Node.js 20.x...${NC}"
@@ -81,9 +85,20 @@ fi
 echo -e "${GREEN}✓ IP EC2 detectat: ${EC2_PUBLIC_IP}${NC}"
 
 # ========== PASUL 3: Configurare Backend ==========
+# ========== PASUL 3: Configurare Backend ==========
 echo -e "\n${YELLOW}⚙️  PASUL 3: Configurare Backend...${NC}"
 
-cd Backend
+PROJECT_ROOT=$(pwd)
+BACKEND_DIR="$PROJECT_ROOT/Backend"
+FRONTEND_DIR="$PROJECT_ROOT/Frontend"
+
+cd "$BACKEND_DIR"
+
+# Creează appsettings.Production.json dacă lipsește
+if [ ! -f appsettings.Production.json ]; then
+    echo -e "${BLUE}→ appsettings.Production.json lipsește. Se copiază din appsettings.json...${NC}"
+    cp appsettings.json appsettings.Production.json
+fi
 
 # Actualizează appsettings.Production.json cu IP-ul corect
 echo -e "${BLUE}→ Actualizare appsettings.Production.json...${NC}"
@@ -105,17 +120,23 @@ echo -e "${GREEN}✓ Backend configurat cu succes!${NC}"
 # ========== PASUL 4: Configurare Frontend ==========
 echo -e "\n${YELLOW}🎨 PASUL 4: Configurare Frontend...${NC}"
 
-cd ../Frontend
+cd "$FRONTEND_DIR"
 
 # Creează .env.production cu IP-ul corect
 echo -e "${BLUE}→ Creare .env.production...${NC}"
 cat > .env.production << EOF
 VITE_API_BASE_URL=http://${EC2_PUBLIC_IP}:5086/api
+VITE_API_URL=http://${EC2_PUBLIC_IP}:5086
 EOF
 
 # Instalează și build
 echo -e "${BLUE}→ Instalare dependențe Frontend...${NC}"
 npm install
+
+# Asigură permisiuni pentru TypeScript compiler
+if [ -f node_modules/.bin/tsc ]; then
+    chmod +x node_modules/.bin/tsc
+fi
 
 echo -e "${BLUE}→ Build Frontend (Production)...${NC}"
 npm run build
@@ -125,34 +146,34 @@ echo -e "${GREEN}✓ Frontend configurat cu succes!${NC}"
 # ========== PASUL 5: Creare scripturi de pornire ==========
 echo -e "\n${YELLOW}📝 PASUL 5: Creare scripturi de pornire...${NC}"
 
-cd ..
+cd "$PROJECT_ROOT"
 
 # Script Backend
-cat > Backend/start-backend.sh << 'BACKEND_SCRIPT'
+cat > "$BACKEND_DIR/start-backend.sh" << 'BACKEND_SCRIPT'
 #!/bin/bash
-cd ~/AuthService/Backend
+cd "$(dirname "$0")"
 export ASPNETCORE_ENVIRONMENT=Production
 export ASPNETCORE_URLS=http://0.0.0.0:5086
 dotnet run --configuration Release
 BACKEND_SCRIPT
 
-chmod +x Backend/start-backend.sh
+chmod +x "$BACKEND_DIR/start-backend.sh"
 echo -e "${GREEN}✓ Script Backend creat${NC}"
 
 # Script Frontend  
-cat > Frontend/start-frontend.sh << 'FRONTEND_SCRIPT'
+cat > "$FRONTEND_DIR/start-frontend.sh" << 'FRONTEND_SCRIPT'
 #!/bin/bash
-cd ~/AuthService/Frontend
+cd "$(dirname "$0")"
 npx vite --host 0.0.0.0 --port 5173
 FRONTEND_SCRIPT
 
-chmod +x Frontend/start-frontend.sh
+chmod +x "$FRONTEND_DIR/start-frontend.sh"
 echo -e "${GREEN}✓ Script Frontend creat${NC}"
 
 # ========== PASUL 6: Publish Backend pentru Production ==========
 echo -e "\n${YELLOW}📦 PASUL 6: Publish Backend...${NC}"
 
-cd Backend
+cd "$BACKEND_DIR"
 echo -e "${BLUE}→ Build Backend ca DLL...${NC}"
 $HOME/.dotnet/dotnet publish -c Release -o ./publish
 
@@ -161,19 +182,19 @@ echo -e "${GREEN}✓ Backend published cu succes!${NC}"
 # ========== PASUL 7: Pornire cu PM2 ==========
 echo -e "\n${YELLOW}🚀 PASUL 7: Pornire aplicații cu PM2...${NC}"
 
-cd ..
+cd "$PROJECT_ROOT"
 
 # Stop aplicațiile dacă rulează deja
-pm2 stop authservice-backend 2>/dev/null || true
-pm2 stop authservice-frontend 2>/dev/null || true
-pm2 delete authservice-backend 2>/dev/null || true
-pm2 delete authservice-frontend 2>/dev/null || true
+pm2 stop gameimpostors-backend 2>/dev/null || true
+pm2 stop gameimpostors-frontend 2>/dev/null || true
+pm2 delete gameimpostors-backend 2>/dev/null || true
+pm2 delete gameimpostors-frontend 2>/dev/null || true
 
 # Start Backend cu DLL
 echo -e "${BLUE}→ Pornire Backend (Port 5086)...${NC}"
-pm2 start $HOME/.dotnet/dotnet --name authservice-backend \
-  --cwd ~/AuthService/Backend \
-  -- ~/AuthService/Backend/publish/Backend.dll \
+pm2 start $HOME/.dotnet/dotnet --name gameimpostors-backend \
+  --cwd "$BACKEND_DIR" \
+  -- "$BACKEND_DIR/publish/Backend.dll" \
   --urls "http://0.0.0.0:5086" \
   --environment Production
 
@@ -182,8 +203,8 @@ sleep 5
 
 # Start Frontend cu vite preview (servește build-ul de production)
 echo -e "${BLUE}→ Pornire Frontend (Port 5173)...${NC}"
-pm2 start npx --name authservice-frontend \
-  --cwd ~/AuthService/Frontend \
+pm2 start npx --name gameimpostors-frontend \
+  --cwd "$FRONTEND_DIR" \
   -- vite preview --host 0.0.0.0 --port 5173
 
 # Salvează configurația PM2
@@ -194,7 +215,7 @@ echo -e "${GREEN}✓ Aplicații pornite cu succes!${NC}"
 
 # ========== FINAL ==========
 echo -e "\n${GREEN}═════════════════════════════════════════════${NC}"
-echo -e "${GREEN}   ✅ DEPLOYMENT COMPLET!                    ${NC}"
+echo -e "${GREEN}   ✅ DEPLOYMENT GAMEIMPOSTORS COMPLET!     ${NC}"
 echo -e "${GREEN}═════════════════════════════════════════════${NC}"
 echo -e ""
 echo -e "${BLUE}📊 Status aplicații:${NC}"
