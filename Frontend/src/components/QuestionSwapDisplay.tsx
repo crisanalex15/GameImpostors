@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { RoundResponse, RoundState } from "../types/game";
 import { gameApi } from "../services/api";
 
 interface QuestionSwapDisplayProps {
   round: RoundResponse;
-  currentUserId?: string;
   onAnswerSubmitted: () => void;
 }
 
 const QuestionSwapDisplay: React.FC<QuestionSwapDisplayProps> = ({
   round,
-  currentUserId,
   onAnswerSubmitted,
 }) => {
   const [answer, setAnswer] = useState("");

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
 import { authApi } from "../services/api";
 
 interface UserProfile {
@@ -19,15 +18,7 @@ interface UserProfile {
   lockoutEnd: string;
 }
 
-interface ApiResponse<T> {
-  message?: string;
-  error?: string;
-  errors?: string[];
-  data?: T;
-}
-
 const SettingsPage: React.FC = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,8 +46,7 @@ const SettingsPage: React.FC = () => {
       console.log("Profile response:", response);
       // Backend returns data directly, not wrapped in a data property
       setProfile(response);
-      // Backend should use camelCase (username with lowercase u) due to JsonNamingPolicy.CamelCase
-      setUsernameForm({ username: response.username || "" });
+      setUsernameForm({ username: response.userName || "" });
     } catch (error: any) {
       console.error("Profile fetch error:", error);
       showMessage("error", "Failed to fetch profile");
@@ -205,7 +195,7 @@ const SettingsPage: React.FC = () => {
               </div>
               <div className="info-item">
                 <label>Username:</label>
-                <span>{profile.username}</span>
+                <span>{profile.userName}</span>
               </div>
               <div className="info-item">
                 <label>First Name:</label>

@@ -13,7 +13,8 @@ const ForgotPasswordPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+  const API_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:5001";
 
   // Step 1: Send verification code to email
   const handleSendCode = async (e: React.FormEvent) => {
@@ -23,7 +24,7 @@ const ForgotPasswordPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/api/auth/forgot-password`, {
+      await axios.post(`${API_URL}/api/auth/forgot-password`, {
         email,
       });
 
@@ -55,7 +56,7 @@ const ForgotPasswordPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/api/auth/reset-password`, {
+      await axios.post(`${API_URL}/api/auth/reset-password`, {
         email,
         code,
         newPassword,
@@ -231,11 +232,10 @@ const ForgotPasswordPage: React.FC = () => {
                   padding: "12px",
                   border: "2px solid #ddd",
                   borderRadius: "8px",
-                  fontSize: "1rem",
+                  fontSize: "1.3rem",
                   transition: "border-color 0.3s",
                   textAlign: "center",
                   letterSpacing: "0.3rem",
-                  fontSize: "1.3rem",
                 }}
                 onFocus={(e) => (e.target.style.borderColor = "#667eea")}
                 onBlur={(e) => (e.target.style.borderColor = "#ddd")}
