@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { gameApi } from "../services/api";
-import { GameStateResponse, GameState, RoundState } from "../types/game";
+import {
+  GameStateResponse,
+  GameState,
+  RoundState,
+  GameType,
+} from "../types/game";
 import PlayerList from "./PlayerList";
 import RoundDisplay from "./RoundDisplay";
 import VotingSection from "./VotingSection";
+import QuestionSwapDisplay from "./QuestionSwapDisplay";
+import AnswersReviewPage from "./AnswersReviewPage";
 import { useAuth } from "../contexts/AuthContext";
 
 const GamePage: React.FC = () => {
@@ -373,8 +380,8 @@ const GamePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Current Round Display - Always visible */}
-      {gameState.currentRound && (
+      {/* Current Round Display - Always visible for WordHidden game */}
+      {gameState.currentRound && gameState.type === GameType.WordHidden && (
         <RoundDisplay
           round={gameState.currentRound}
           gameType={gameState.type}
@@ -390,6 +397,28 @@ const GamePage: React.FC = () => {
           onNextRound={handleNextRound}
         />
       )}
+
+      {/* Question Swap Display - Show during Active state for Questions game */}
+      {gameState.currentRound &&
+        gameState.type === GameType.Questions &&
+        gameState.currentRound.state === RoundState.Active && (
+          <QuestionSwapDisplay
+            round={gameState.currentRound}
+            currentUserId={user?.id}
+            onAnswerSubmitted={loadGameState}
+          />
+        )}
+
+      {/* Answers Review Page - Show during Review state for Questions game */}
+      {gameState.currentRound &&
+        gameState.type === GameType.Questions &&
+        gameState.currentRound.state === RoundState.Review && (
+          <AnswersReviewPage
+            round={gameState.currentRound}
+            players={gameState.players}
+            currentUserId={user?.id}
+          />
+        )}
 
       {/* Voting Section - Show during Voting and Ended round states (but not game ended) */}
       {gameState.state !== GameState.Ended &&

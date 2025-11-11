@@ -24,10 +24,9 @@ const VotingSection: React.FC<VotingSectionProps> = ({
   currentUserId,
   gameType,
   onVoteSubmitted,
-  onNextRound,
 }) => {
   const [selectedPlayer, setSelectedPlayer] = useState("");
-  const [reason, setReason] = useState("");
+  const [reason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [wordGuess, setWordGuess] = useState("");
   const [isGuessing, setIsGuessing] = useState(false);

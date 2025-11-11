@@ -9,6 +9,7 @@ namespace Backend.Models
         {
             Waiting,    // Waiting for players to join
             Active,     // Round is active, players can answer
+            Review,     // Review answers before voting (Question Swap only)
             Voting,     // Voting phase
             Ended       // Round ended
         }

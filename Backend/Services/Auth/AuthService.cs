@@ -87,6 +87,8 @@ namespace Backend.Services.Auth
                 // Salvăm refresh token-ul în baza de date
                 user.RefreshToken = refreshToken;
                 user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+                user.AccessFailedCount = 0;
+                user.LockoutEnd = null;
                 await _userManager.UpdateAsync(user);
 
                 return (user, token, refreshToken, null);
@@ -305,6 +307,8 @@ namespace Backend.Services.Auth
                     // Curăț codul de resetare parolă după succes
                     user.ResetPasswordCode = null;
                     user.VerificationCodePasswordExpiryTime = null;
+                    user.AccessFailedCountPasswordReset = 0;
+                    user.LockoutEndPasswordReset = null;
                     user.UpdateLastModified();
                     await _userManager.UpdateAsync(user);
                     return (true, Array.Empty<string>());

@@ -215,6 +215,13 @@ export const gameApi = {
     });
     return response.data;
   },
+
+  startVoting: async (
+    roundId: string
+  ): Promise<ApiResponse<GameStateResponse>> => {
+    const response = await api.post(`/Game/round/${roundId}/start-voting`);
+    return response.data;
+  },
 };
 
 export default api;

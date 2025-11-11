@@ -224,42 +224,53 @@ namespace Backend.Services.Game
                 game.UpdateTimestamp();
                 await _context.SaveChangesAsync();
 
-                // Check if all players are ready and game is active (not in lobby)
-                if (game.State == GameObject.GameState.Game && isReady)
+                // Check if all players are ready
+                if (isReady)
                 {
                     var allReady = game.Players.All(p => p.IsReady);
                     if (allReady)
                     {
-                        _logger.LogInformation($"All players ready! Starting next round for game {gameId}");
-
-                        // Reset all players' ready status
-                        foreach (var p in game.Players)
-                        {
-                            p.IsReady = false;
-                        }
-
-                        // Get current round to end it
+                        // Get current round
                         var currentRound = await GetCurrentRoundAsync(gameId);
-                        if (currentRound != null)
+
+                        // If in Review state (Question Swap), do NOT allow manual transition
+                        // The review will automatically transition after 5 seconds
+                        if (currentRound != null && currentRound.State == Round.RoundState.Review)
                         {
+                            _logger.LogInformation($"Players ready in Review state, but waiting for 5-second review timer for round {currentRound.Id}");
+                            return (true, "Waiting for review period to complete...");
+                        }
+
+                        // If game is active and round is ended, start next round
+                        if (game.State == GameObject.GameState.Game && currentRound != null && currentRound.State == Round.RoundState.Ended)
+                        {
+                            _logger.LogInformation($"All players ready! Starting next round for game {gameId}");
+
+                            // Reset all players' ready status
+                            foreach (var p in game.Players)
+                            {
+                                p.IsReady = false;
+                            }
+
+                            // End current round
                             await EndRoundAsync(currentRound.Id);
-                        }
 
-                        // Increment round number
-                        game.RoundNumber++;
+                            // Increment round number
+                            game.RoundNumber++;
 
-                        if (game.RoundNumber > game.MaxRounds)
-                        {
-                            // Game is over - end game (leaderboard will show)
-                            await EndGameAsync(gameId);
-                            _logger.LogInformation($"Game {gameId} ended! Final scores will be displayed.");
-                            return (true, "All players ready - Game ended!");
-                        }
-                        else
-                        {
-                            // Create new round
-                            await CreateRoundAsync(gameId);
-                            return (true, $"All players ready - Round {game.RoundNumber} started!");
+                            if (game.RoundNumber > game.MaxRounds)
+                            {
+                                // Game is over - end game (leaderboard will show)
+                                await EndGameAsync(gameId);
+                                _logger.LogInformation($"Game {gameId} ended! Final scores will be displayed.");
+                                return (true, "All players ready - Game ended!");
+                            }
+                            else
+                            {
+                                // Create new round
+                                await CreateRoundAsync(gameId);
+                                return (true, $"All players ready - Round {game.RoundNumber} started!");
+                            }
                         }
                     }
                 }
@@ -536,8 +547,40 @@ namespace Backend.Services.Game
 
                     if (answersCount >= activePlayers)
                     {
-                        // Move to voting phase
-                        await StartVotingPhaseAsync(roundId);
+                        // For Question Swap, move to Review state to show answers
+                        // For WordHidden, move directly to voting
+                        if (game.Type == GameObject.GameType.WordHidden)
+                        {
+                            // For WordHidden, move to voting phase immediately
+                            await StartVotingPhaseAsync(roundId);
+                        }
+                        else if (game.Type == GameObject.GameType.Questions)
+                        {
+                            // For Questions, move to Review state
+                            round.State = Round.RoundState.Review;
+                            await _context.SaveChangesAsync();
+
+                            // Start a background task to automatically transition to Voting after 5 seconds
+                            _ = Task.Run(async () =>
+                            {
+                                await Task.Delay(5000); // Wait 5 seconds
+
+                                try
+                                {
+                                    // Check if round is still in Review state
+                                    var currentRound = await _context.Rounds.FindAsync(round.Id);
+                                    if (currentRound != null && currentRound.State == Round.RoundState.Review)
+                                    {
+                                        _logger.LogInformation($"Auto-transitioning round {round.Id} from Review to Voting after 5 seconds");
+                                        await StartVotingPhaseAsync(round.Id);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogError($"Error auto-transitioning to voting: {ex.Message}");
+                                }
+                            });
+                        }
                     }
                 }
 

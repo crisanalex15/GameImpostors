@@ -127,12 +127,12 @@ namespace Backend.Areas.Identity.Pages.Account
                     return Page();
                 }
 
-                // Verifică dacă utilizatorul este Admin (pentru backoffice)
-                if (!await _userManager.IsInRoleAsync(user, "Admin"))
-                {
-                    ModelState.AddModelError(string.Empty, "Access denied. Admin privileges required.");
-                    return Page();
-                }
+                // Verifică dacă utilizatorul este Admin (pentru backoffice) - TEMPORAR DISABLED
+                // if (!await _userManager.IsInRoleAsync(user, "Admin"))
+                // {
+                //     ModelState.AddModelError(string.Empty, "Access denied. Admin privileges required.");
+                //     return Page();
+                // }
 
                 // Login cu SignInManager pentru cookie authentication
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);

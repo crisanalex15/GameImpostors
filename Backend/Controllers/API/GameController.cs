@@ -345,6 +345,41 @@ namespace Backend.Controllers.API
 
         #region Voting System
 
+        // Start voting phase manually (for Question Swap after timer)
+        [HttpPost("round/{roundId}/start-voting")]
+        public async Task<IActionResult> StartVoting(Guid roundId)
+        {
+            try
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                var (success, message) = await _gameService.StartVotingPhaseAsync(roundId);
+
+                if (!success)
+                {
+                    return BadRequest(new { message });
+                }
+
+                var round = await _gameService.GetRoundByIdAsync(roundId);
+                if (round != null)
+                {
+                    var userId = Guid.Parse(user.Id);
+                    var response = await BuildGameStateResponse(round.GameId, userId);
+                    return Ok(new { message, game = response });
+                }
+
+                return Ok(new { message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
+            }
+        }
+
         // Submit a vote
         [HttpPost("round/{roundId}/guess-word")]
         public async Task<IActionResult> GuessWord(Guid roundId, [FromBody] GuessWordRequest request)
@@ -519,9 +554,18 @@ namespace Backend.Controllers.API
             {
                 if (round.Game.Type == GameObject.GameType.Questions && round.Question != null)
                 {
-                    response.QuestionText = currentPlayer.IsImpostor
-                        ? round.Question.FakeQuestionText
-                        : round.Question.QuestionText;
+                    // In Review state, everyone sees the CORRECT question (crewmate question)
+                    // In Active state, players see question based on their role
+                    if (round.State == Round.RoundState.Review || round.State == Round.RoundState.Voting || round.State == Round.RoundState.Ended)
+                    {
+                        response.QuestionText = round.Question.QuestionText;
+                    }
+                    else
+                    {
+                        response.QuestionText = currentPlayer.IsImpostor
+                            ? round.Question.FakeQuestionText
+                            : round.Question.QuestionText;
+                    }
                 }
                 else if (round.Game.Type == GameObject.GameType.WordHidden && round.WordHidden != null)
                 {

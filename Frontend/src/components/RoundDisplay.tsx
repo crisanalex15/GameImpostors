@@ -133,9 +133,9 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
   return (
     round.state === RoundState.Active && (
       <>
-        <div className="card">
-          <div className="game-status">
-            <h2>{getRoundTitle()}</h2>
+    <div className="card">
+      <div className="game-status">
+        <h2>{getRoundTitle()}</h2>
             <p
               style={{
                 textAlign: "center",
@@ -146,27 +146,27 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
             >
               {getRoundDescription()}
             </p>
-          </div>
+      </div>
           {/* Content Display */}
           {round.state === RoundState.Active && getContent() && (
             <>
-              <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
-                {getContentLabel()}
-              </h3>
-              <div
-                style={{
-                  background: "rgba(255, 255, 255, 0.9)",
-                  padding: "20px",
-                  borderRadius: "10px",
-                  textAlign: "center",
-                  fontSize: "1.2rem",
-                  fontWeight: "bold",
-                  marginBottom: "20px",
-                  border: "2px solid #667eea",
-                }}
-              >
-                {getContent()}
-              </div>
+      <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
+        {getContentLabel()}
+      </h3>
+      <div
+        style={{
+          background: "rgba(255, 255, 255, 0.9)",
+          padding: "20px",
+          borderRadius: "10px",
+          textAlign: "center",
+          fontSize: "1.2rem",
+          fontWeight: "bold",
+          marginBottom: "20px",
+          border: "2px solid #667eea",
+        }}
+      >
+        {getContent()}
+      </div>
             </>
           )}
 
@@ -208,7 +208,7 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
                 </button>
               </div>
             )}
-          {/* Game Content
+      {/* Game Content
       {round.state === RoundState.Active && getContent() && (
         <div className="answer-section">
           <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
@@ -279,7 +279,7 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
           )}
         </div>
       )} */}
-          {/* Answers Display */}
+      {/* Answers Display */}
           {/* {round.state === RoundState.Voting && round.answers.length > 0 && (
         <div className="answer-section">
           <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
@@ -308,10 +308,10 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
       )} */}
           {/* Round Ended - Scoreboard and Options - ONLY shown when game is ended, not just round */}
           {false && round.state === RoundState.Ended && (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "20px",
+        <div
+          style={{
+            textAlign: "center",
+            padding: "20px",
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 color: "white",
                 borderRadius: "15px",
@@ -501,9 +501,9 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
                   </>
                 )}
               </div>
-            </div>
-          )}
         </div>
+      )}
+    </div>
       </>
     )
   );

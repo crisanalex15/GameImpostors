@@ -12,8 +12,9 @@ export enum GameState {
 export enum RoundState {
   Waiting = 0,
   Active = 1,
-  Voting = 2,
-  Ended = 3,
+  Review = 2,
+  Voting = 3,
+  Ended = 4,
 }
 
 export interface CreateGameRequest {
