@@ -535,7 +535,7 @@ const GamePage: React.FC = () => {
               flexWrap: "wrap",
             }}
           >
-            {user?.id === gameState.hostId && (
+            {user?.id === gameState.hostId ? (
               <button
                 onClick={handleNewGame}
                 style={{
@@ -553,31 +553,33 @@ const GamePage: React.FC = () => {
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
               >
-                Meci Nou
+                Meci Nou (Host)
+              </button>
+            ) : (
+              <button
+                onClick={handleLeaveGame}
+                style={{
+                  padding: "15px 30px",
+                  fontSize: "1.1rem",
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.opacity = "0.9")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.opacity = "1")
+                }
+              >
+                Părăsește Jocul
               </button>
             )}
-            <button
-              onClick={handleLeaveGame}
-              style={{
-                padding: "15px 30px",
-                fontSize: "1.1rem",
-                background: "rgba(220, 53, 69, 0.9)",
-                color: "white",
-                border: "none",
-                borderRadius: "10px",
-                cursor: "pointer",
-                fontWeight: "bold",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(220, 53, 69, 1)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "rgba(220, 53, 69, 0.9)")
-              }
-            >
-              Părăsește Lobby
-            </button>
           </div>
         </div>
       )}

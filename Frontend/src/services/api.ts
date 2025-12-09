@@ -27,12 +27,26 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Add response interceptor for debugging
+// Add response interceptor to catch expired/unauthorized sessions
+let isRedirectingToLogin = false;
+
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
+    const status = error?.response?.status;
+
+    // If token is expired/invalid, clean up local storage and redirect to login
+    if ((status === 401 || status === 403) && !isRedirectingToLogin) {
+      isRedirectingToLogin = true;
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      localStorage.removeItem("currentGameId");
+      // redirect to login with a hint
+      window.location.href = "/login?session=expired";
+    }
+
     return Promise.reject(error);
   }
 );

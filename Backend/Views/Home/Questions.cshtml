@@ -1,4 +1,5 @@
 @using Backend.Models.Questions
+@using System.Net
 @{
     ViewData["Title"] = "Questions & Words Management";
     var QList = ViewBag.QList as List<Question>;
@@ -112,6 +113,26 @@
         vertical-align: middle;
         border-color: #f8f9fa;
     }
+    .collapse-section-header {
+        cursor: pointer;
+        user-select: none;
+    }
+    .collapse-section-header:hover {
+        opacity: 0.9;
+    }
+    .category-badge {
+        transition: all 0.2s ease;
+    }
+    .category-badge:hover {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+    .filter-section {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
 </style>
 
 <div class="container-fluid">
@@ -132,24 +153,67 @@
         </div>
     </div>
 
-    <!-- Questions Table -->
-    <div class="table-container">
+    <!-- Question Swap Section -->
+    <div class="table-container mb-4">
         <div class="table-header">
-            <h3><i class="fas fa-question-circle me-2"></i>Întrebări (@QList?.Count ?? 0)</h3>
+            <button class="btn btn-link p-0 text-decoration-none collapse-section-header" type="button" data-bs-toggle="collapse" data-bs-target="#questionSwapSection" aria-expanded="false" aria-controls="questionSwapSection" style="font-size: 1.5rem; font-weight: 600; color: #667eea;">
+                <i class="fas fa-chevron-down me-2 collapse-icon"></i>
+                <i class="fas fa-question-circle me-2"></i>Question Swap (@QList?.Count ?? 0)
+            </button>
             <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
                 <i class="fas fa-plus me-2"></i>Adaugă Întrebare
             </button>
         </div>
+        <div class="collapse" id="questionSwapSection">
+            <div class="card card-body border-0 p-3">
+                <!-- Filters for Question Swap -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Filtrează după categorie:</label>
+                        <select class="form-select" id="filterQuestionCategory" onchange="filterQuestions()">
+                            <option value="">Toate categoriile</option>
+                            @if (QList != null)
+                            {
+                                @foreach (var cat in QList.Select(q => q.Category).Distinct().OrderBy(c => c))
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Filtrează după dificultate:</label>
+                        <select class="form-select" id="filterQuestionDifficulty" onchange="filterQuestions()">
+                            <option value="">Toate dificultățile</option>
+                            <option value="1">Ușor</option>
+                            <option value="2">Mediu</option>
+                            <option value="3">Greu</option>
+                            <option value="4">Foarte Greu</option>
+                            <option value="5">Extrem</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Filtrează după status:</label>
+                        <select class="form-select" id="filterQuestionStatus" onchange="filterQuestions()">
+                            <option value="">Toate</option>
+                            <option value="true">Activ</option>
+                            <option value="false">Inactiv</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-secondary w-100" onclick="clearQuestionFilters()">
+                            <i class="fas fa-times me-2"></i>Resetează Filtrele
+                        </button>
+                    </div>
+        </div>
         <div class="table-responsive">
-            <table class="table table-hover">
+                    <table class="table table-hover" id="questionsTable">
                 <thead>
                     <tr>
                         <th>Întrebare</th>
                         <th>Întrebare Falsă</th>
-                        <th>Categorie</th>
+                                <th>Categorie <button class="btn btn-sm btn-link p-0" onclick="showCategoryManager('questions')" title="Gestionează categoriile" style="color: white;"><i class="fas fa-cog"></i></button></th>
                         <th>Dificultate</th>
-                        <th>Review</th>
-                        <th>Count</th>
                         <th>Activ</th>
                         <th>Creat</th>
                         <th>Acțiuni</th>
@@ -160,13 +224,13 @@
                     {
                         @foreach (var question in QList)
                         {
-                            <tr>
+                                    <tr data-category="@question.Category" data-difficulty="@question.Difficulty" data-status="@question.IsActive.ToString().ToLower()">
                                 <td>@question.QuestionText</td>
                                 <td>@question.FakeQuestionText</td>
-                                <td><span class="badge bg-primary">@question.Category</span></td>
+                                        <td>
+                                            <span class="badge bg-primary category-badge" data-question-id="@question.Id" onclick="editCategory('@question.Id', '@question.Category', 'question')" style="cursor: pointer;" title="Click pentru a edita categoria">@question.Category</span>
+                                        </td>
                                 <td><span class="badge bg-info">@question.Difficulty</span></td>
-                                <td>@question.PlayerReview</td>
-                                <td>@question.ReviewCount</td>
                                 <td>
                                     @if (question.IsActive)
                                     {
@@ -179,8 +243,20 @@
                                 </td>
                                 <td>@question.CreatedAt.ToString("dd/MM/yyyy")</td>
                                 <td>
-                                    <button class="btn btn-edit">Edit</button>
-                                    <button class="btn btn-delete">Delete</button>
+                                    <button 
+                                        type="button"
+                                        class="btn btn-sm btn-warning me-2" 
+                                        onclick="editQuestion('@question.Id', '@question.QuestionText.Replace("'", "\\'")', '@question.FakeQuestionText.Replace("'", "\\'")', '@question.Category.Replace("'", "\\'")', '@question.Difficulty', @question.IsActive.ToString().ToLower())"
+                                        title="Editează">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                            <button 
+                                                type="button"
+                                                class="btn btn-sm btn-danger" 
+                                                onclick="deleteQuestion('@question.Id')" 
+                                                title="Șterge">
+                                                <i class="fas fa-trash-alt"></i> Delete
+                                            </button>
                                 </td>
                             </tr>
                         }
@@ -188,28 +264,75 @@
                     else
                     {
                         <tr>
-                            <td colspan="9" class="text-center text-muted">Nu există întrebări încă</td>
+                                    <td colspan="7" class="text-center text-muted">Nu există întrebări încă</td>
                         </tr>
                     }
                 </tbody>
             </table>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Word Hidden Table -->
+    <!-- Word Hidden Section -->
     <div class="table-container">
         <div class="table-header">
-            <h3><i class="fas fa-eye-slash me-2"></i>Cuvinte Ascunse (@WList?.Count ?? 0)</h3>
+            <button class="btn btn-link p-0 text-decoration-none collapse-section-header" type="button" data-bs-toggle="collapse" data-bs-target="#wordHiddenSection" aria-expanded="false" aria-controls="wordHiddenSection" style="font-size: 1.5rem; font-weight: 600; color: #667eea;">
+                <i class="fas fa-chevron-down me-2 collapse-icon"></i>
+                <i class="fas fa-eye-slash me-2"></i>Word Hidden (@WList?.Count ?? 0)
+            </button>
             <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addWordModal">
                 <i class="fas fa-plus me-2"></i>Adaugă Cuvânt
             </button>
         </div>
+        <div class="collapse" id="wordHiddenSection">
+            <div class="card card-body border-0 p-3">
+                <!-- Filters for Word Hidden -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Filtrează după categorie:</label>
+                        <select class="form-select" id="filterWordCategory" onchange="filterWords()">
+                            <option value="">Toate categoriile</option>
+                            @if (WList != null)
+                            {
+                                @foreach (var cat in WList.Select(w => w.Category).Distinct().OrderBy(c => c))
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Filtrează după dificultate:</label>
+                        <select class="form-select" id="filterWordDifficulty" onchange="filterWords()">
+                            <option value="">Toate dificultățile</option>
+                            <option value="1">Ușor</option>
+                            <option value="2">Mediu</option>
+                            <option value="3">Greu</option>
+                            <option value="4">Foarte Greu</option>
+                            <option value="5">Extrem</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Filtrează după status:</label>
+                        <select class="form-select" id="filterWordStatus" onchange="filterWords()">
+                            <option value="">Toate</option>
+                            <option value="true">Activ</option>
+                            <option value="false">Inactiv</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-secondary w-100" onclick="clearWordFilters()">
+                            <i class="fas fa-times me-2"></i>Resetează Filtrele
+                        </button>
+                    </div>
+        </div>
         <div class="table-responsive">
-            <table class="table table-hover">
+                    <table class="table table-hover" id="wordsTable">
                 <thead>
                     <tr>
                         <th>Cuvânt</th>
-                        <th>Categorie</th>
+                                <th>Categorie <button class="btn btn-sm btn-link p-0" onclick="showCategoryManager('words')" title="Gestionează categoriile" style="color: white;"><i class="fas fa-cog"></i></button></th>
                         <th>Dificultate</th>
                         <th>Activ</th>
                         <th>Creat</th>
@@ -221,9 +344,11 @@
                     {
                         @foreach (var word in WList)
                         {
-                            <tr>
+                                    <tr data-category="@word.Category" data-difficulty="@word.Difficulty" data-status="@word.IsActive.ToString().ToLower()">
                                 <td><strong>@word.Word</strong></td>
-                                <td><span class="badge bg-primary">@word.Category</span></td>
+                                        <td>
+                                            <span class="badge bg-primary category-badge" data-word-id="@word.Id" onclick="editCategory('@word.Id', '@word.Category', 'word')" style="cursor: pointer;" title="Click pentru a edita categoria">@word.Category</span>
+                                        </td>
                                 <td><span class="badge bg-info">@word.Difficulty</span></td>
                                 <td>
                                     @if (word.IsActive)
@@ -237,8 +362,20 @@
                                 </td>
                                 <td>@word.CreatedAt.ToString("dd/MM/yyyy")</td>
                                 <td>
-                                    <button class="btn btn-edit">Edit</button>
-                                    <button class="btn btn-delete">Delete</button>
+                                            <button 
+                                                type="button"
+                                                class="btn btn-sm btn-warning me-2" 
+                                                onclick="editWord('@word.Id', '@word.Word.Replace("'", "&#39;").Replace("\"", "&quot;")', '@word.Category.Replace("'", "&#39;").Replace("\"", "&quot;")', '@word.Difficulty', @word.IsActive.ToString().ToLower())"
+                                                title="Editează">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                class="btn btn-sm btn-danger" 
+                                                onclick="deleteWord('@word.Id')" 
+                                                title="Șterge">
+                                                <i class="fas fa-trash-alt"></i> Delete
+                                            </button>
                                 </td>
                             </tr>
                         }
@@ -251,6 +388,8 @@
                     }
                 </tbody>
             </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -279,24 +418,32 @@
                     </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="category" class="form-label">Categorie</label>
-                            <select class="form-select" id="category" name="category" required>
+                            <label for="questionCategory" class="form-label">Categorie</label>
+                            <div class="input-group">
+                                <select class="form-select" id="questionCategory" name="questionCategory" required>
                                 <option value="">Selectează categoria</option>
-                                <option value="General">General</option>
-                                <option value="Sport">Sport</option>
-                                <option value="Istorie">Istorie</option>
-                                <option value="Știință">Știință</option>
-                                <option value="Cultură">Cultură</option>
-                                <option value="Geografie">Geografie</option>
+                                    @if (QList != null)
+                                    {
+                                        @foreach (var cat in QList.Select(q => q.Category).Distinct().OrderBy(c => c))
+                                        {
+                                            <option value="@cat">@cat</option>
+                                        }
+                                    }
                             </select>
+                                <button type="button" class="btn btn-outline-secondary" onclick="showCategoryManager('questions'); setTimeout(() => { document.getElementById('addQuestionModal').querySelector('.btn-close').click(); }, 100);" title="Gestionează categoriile">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="difficulty" class="form-label">Dificultate</label>
                             <select class="form-select" id="difficulty" name="difficulty" required>
                                 <option value="">Selectează dificultatea</option>
-                                <option value="Ușor">Ușor</option>
-                                <option value="Mediu">Mediu</option>
-                                <option value="Greu">Greu</option>
+                                <option value="1">Ușor</option>
+                                <option value="2">Mediu</option>
+                                <option value="3">Greu</option>
+                                <option value="4">Foarte Greu</option>
+                                <option value="5">Extrem</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
@@ -313,6 +460,146 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
                 <button type="button" class="btn btn-success" onclick="addQuestion()">
                     <i class="fas fa-save me-2"></i>Salvează Întrebarea
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Question Modal -->
+<div class="modal fade" id="editQuestionModal" tabindex="-1" aria-labelledby="editQuestionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="editQuestionModalLabel">
+                    <i class="fas fa-edit me-2"></i>Editează Întrebarea
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editQuestionForm">
+                    <input type="hidden" id="editQuestionId" name="editQuestionId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editQuestionText" class="form-label">Întrebarea Principală</label>
+                            <textarea class="form-control" id="editQuestionText" name="editQuestionText" rows="3" required></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editFakeQuestionText" class="form-label">Întrebarea Falsă</label>
+                            <textarea class="form-control" id="editFakeQuestionText" name="editFakeQuestionText" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="editQuestionCategory" class="form-label">Categorie</label>
+                            <div class="input-group">
+                                <select class="form-select" id="editQuestionCategory" name="editQuestionCategory" required>
+                                    <option value="">Selectează categoria</option>
+                                    @if (QList != null)
+                                    {
+                                        @foreach (var cat in QList.Select(q => q.Category).Distinct().OrderBy(c => c))
+                                        {
+                                            <option value="@cat">@cat</option>
+                                        }
+                                    }
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary" onclick="showCategoryManager('questions'); setTimeout(() => { document.getElementById('editQuestionModal').querySelector('.btn-close').click(); }, 100);" title="Gestionează categoriile">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="editDifficulty" class="form-label">Dificultate</label>
+                            <select class="form-select" id="editDifficulty" name="editDifficulty" required>
+                                <option value="">Selectează dificultatea</option>
+                                <option value="1">Ușor</option>
+                                <option value="2">Mediu</option>
+                                <option value="3">Greu</option>
+                                <option value="4">Foarte Greu</option>
+                                <option value="5">Extrem</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="editIsActive" class="form-label">Status</label>
+                            <select class="form-select" id="editIsActive" name="editIsActive">
+                                <option value="true">Activ</option>
+                                <option value="false">Inactiv</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
+                <button type="button" class="btn btn-success" onclick="saveQuestion()">
+                    <i class="fas fa-save me-2"></i>Salvează Modificările
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Word Modal -->
+<div class="modal fade" id="editWordModal" tabindex="-1" aria-labelledby="editWordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="editWordModalLabel">
+                    <i class="fas fa-edit me-2"></i>Editează Cuvântul
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editWordForm">
+                    <input type="hidden" id="editWordId" name="editWordId">
+                    <div class="mb-3">
+                        <label for="editWord" class="form-label">Cuvântul</label>
+                        <input type="text" class="form-control" id="editWord" name="editWord" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editWordCategory" class="form-label">Categorie</label>
+                            <div class="input-group">
+                                <select class="form-select" id="editWordCategory" name="editWordCategory" required>
+                                    <option value="">Selectează categoria</option>
+                                    @if (WList != null)
+                                    {
+                                        @foreach (var cat in WList.Select(w => w.Category).Distinct().OrderBy(c => c))
+                                        {
+                                            <option value="@cat">@cat</option>
+                                        }
+                                    }
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary" onclick="showCategoryManager('words'); setTimeout(() => { document.getElementById('editWordModal').querySelector('.btn-close').click(); }, 100);" title="Gestionează categoriile">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editWordDifficulty" class="form-label">Dificultate</label>
+                            <select class="form-select" id="editWordDifficulty" name="editWordDifficulty" required>
+                                <option value="">Selectează dificultatea</option>
+                                <option value="1">Ușor</option>
+                                <option value="2">Mediu</option>
+                                <option value="3">Greu</option>
+                                <option value="4">Foarte Greu</option>
+                                <option value="5">Extrem</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editWordIsActive" class="form-label">Status</label>
+                        <select class="form-select" id="editWordIsActive" name="editWordIsActive">
+                            <option value="true">Activ</option>
+                            <option value="false">Inactiv</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
+                <button type="button" class="btn btn-success" onclick="saveWord()">
+                    <i class="fas fa-save me-2"></i>Salvează Modificările
                 </button>
             </div>
         </div>
@@ -338,23 +625,31 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="wordCategory" class="form-label">Categorie</label>
+                            <div class="input-group">
                             <select class="form-select" id="wordCategory" name="wordCategory" required>
                                 <option value="">Selectează categoria</option>
-                                <option value="General">General</option>
-                                <option value="Sport">Sport</option>
-                                <option value="Istorie">Istorie</option>
-                                <option value="Știință">Știință</option>
-                                <option value="Cultură">Cultură</option>
-                                <option value="Geografie">Geografie</option>
+                                    @if (WList != null)
+                                    {
+                                        @foreach (var cat in WList.Select(w => w.Category).Distinct().OrderBy(c => c))
+                                        {
+                                            <option value="@cat">@cat</option>
+                                        }
+                                    }
                             </select>
+                                <button type="button" class="btn btn-outline-secondary" onclick="showCategoryManager('words'); setTimeout(() => { document.getElementById('addWordModal').querySelector('.btn-close').click(); }, 100);" title="Gestionează categoriile">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="wordDifficulty" class="form-label">Dificultate</label>
                             <select class="form-select" id="wordDifficulty" name="wordDifficulty" required>
                                 <option value="">Selectează dificultatea</option>
-                                <option value="Ușor">Ușor</option>
-                                <option value="Mediu">Mediu</option>
-                                <option value="Greu">Greu</option>
+                                <option value="1">Ușor</option>
+                                <option value="2">Mediu</option>
+                                <option value="3">Greu</option>
+                                <option value="4">Foarte Greu</option>
+                                <option value="5">Extrem</option>
                             </select>
                         </div>
                     </div>
@@ -377,40 +672,881 @@
     </div>
 </div>
 
+@Html.AntiForgeryToken()
+
+<!-- Category Manager Modal -->
+<div class="modal fade" id="categoryManagerModal" tabindex="-1" aria-labelledby="categoryManagerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="categoryManagerModalLabel">
+                    <i class="fas fa-tags me-2"></i>Gestionare Categorii
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Adaugă o categorie nouă:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="newCategoryName" placeholder="Nume categorie">
+                        <button class="btn btn-success" onclick="addNewCategory()">
+                            <i class="fas fa-plus me-2"></i>Adaugă
+                        </button>
+                    </div>
+                </div>
+                <hr>
+                <h6>Categorii existente:</h6>
+                <div id="categoriesList" class="d-flex flex-wrap gap-2">
+                    <!-- Categories will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Închide</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Edit Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="editCategoryModalLabel">
+                    <i class="fas fa-edit me-2"></i>Editează Categoria
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCategoryForm">
+                    <input type="hidden" id="editCategoryId" name="editCategoryId">
+                    <input type="hidden" id="editCategoryType" name="editCategoryType">
+                    <div class="mb-3">
+                        <label for="editCategoryName" class="form-label">Categoria Nouă</label>
+                        <input type="text" class="form-control" id="editCategoryName" name="editCategoryName" required>
+                        <small class="form-text text-muted">Sau selectează o categorie existentă:</small>
+                        <select class="form-select mt-2" id="existingCategorySelect" onchange="document.getElementById('editCategoryName').value = this.value">
+                            <option value="">Selectează o categorie existentă</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
+                <button type="button" class="btn btn-success" onclick="saveCategory()">
+                    <i class="fas fa-save me-2"></i>Salvează
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+
+    function getToken() {
+        return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+    }
+
     function addQuestion() {
-        const form = document.getElementById('addQuestionForm');
-        const formData = new FormData(form);
-        
-        // Aici vei adăuga logica pentru salvarea întrebării
-        console.log('Adăugare întrebare:', Object.fromEntries(formData));
-        
-        // Pentru moment, doar închidem modalul
-        const modal = bootstrap.Modal.getInstance(document.getElementById('addQuestionModal'));
+        const questionText = document.getElementById('questionText').value;
+        const fakeQuestionText = document.getElementById('fakeQuestionText').value;
+        const difficulty = document.getElementById('difficulty').value;
+        const isActive = document.getElementById('isActive').value === 'true';
+
+        if (!questionText || !fakeQuestionText || !difficulty) {
+            alert('Te rog completează toate câmpurile!');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('questionText', questionText);
+        formData.append('fakeQuestionText', fakeQuestionText);
+        formData.append('difficulty', difficulty);
+        formData.append('isActive', isActive);
+        formData.append('__RequestVerificationToken', getToken());
+
+        fetch('@Url.Action("AddQuestion", "Home")', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('A apărut o eroare la adăugarea întrebării!');
+        });
+    }
+
+    function editQuestion(id, questionText, fakeQuestionText, category, difficulty, isActive) {
+        document.getElementById('editQuestionId').value = id;
+        document.getElementById('editQuestionText').value = questionText.replace(/\\'/g, "'");
+        document.getElementById('editFakeQuestionText').value = fakeQuestionText.replace(/\\'/g, "'");
+        document.getElementById('editQuestionCategory').value = category || '';
+        document.getElementById('editDifficulty').value = difficulty;
+        document.getElementById('editIsActive').value = isActive.toString();
+
+        const modal = new bootstrap.Modal(document.getElementById('editQuestionModal'));
+        modal.show();
+    }
+
+    function saveQuestion() {
+        const id = document.getElementById('editQuestionId').value;
+        const questionText = document.getElementById('editQuestionText').value;
+        const fakeQuestionText = document.getElementById('editFakeQuestionText').value;
+        const editQuestionCategory = document.getElementById('editQuestionCategory').value;
+        const difficulty = document.getElementById('editDifficulty').value;
+        const isActive = document.getElementById('editIsActive').value === 'true';
+
+        if (!questionText || !fakeQuestionText || !editQuestionCategory || !difficulty) {
+            alert('Te rog completează toate câmpurile!');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('questionText', questionText);
+        formData.append('fakeQuestionText', fakeQuestionText);
+        formData.append('editQuestionCategory', editQuestionCategory);
+        formData.append('difficulty', difficulty);
+        formData.append('isActive', isActive);
+        formData.append('__RequestVerificationToken', getToken());
+
+        fetch('@Url.Action("EditQuestion", "Home")', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editQuestionModal'));
         modal.hide();
-        
-        // Resetăm formularul
-        form.reset();
-        
-        // Aici poți adăuga o notificare de succes
-        alert('Întrebarea a fost adăugată cu succes!');
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('A apărut o eroare la actualizarea întrebării!');
+        });
+    }
+
+    function deleteQuestion(id) {
+        if (!confirm('Ești sigur că vrei să ștergi această întrebare?')) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('__RequestVerificationToken', getToken());
+
+        fetch('@Url.Action("DeleteQuestion", "Home")', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('A apărut o eroare la ștergerea întrebării!');
+        });
     }
     
     function addWord() {
-        const form = document.getElementById('addWordForm');
-        const formData = new FormData(form);
-        
-        // Aici vei adăuga logica pentru salvarea cuvântului
-        console.log('Adăugare cuvânt:', Object.fromEntries(formData));
-        
-        // Pentru moment, doar închidem modalul
-        const modal = bootstrap.Modal.getInstance(document.getElementById('addWordModal'));
-        modal.hide();
-        
-        // Resetăm formularul
-        form.reset();
-        
-        // Aici poți adăuga o notificare de succes
-        alert('Cuvântul a fost adăugat cu succes!');
+        const word = document.getElementById('word').value;
+        const wordCategory = document.getElementById('wordCategory').value;
+        const wordDifficulty = document.getElementById('wordDifficulty').value;
+        const wordIsActive = document.getElementById('wordIsActive').value === 'true';
+
+        if (!word || !wordCategory || !wordDifficulty) {
+            alert('Te rog completează toate câmpurile!');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('word', word);
+        formData.append('wordCategory', wordCategory);
+        formData.append('wordDifficulty', wordDifficulty);
+        formData.append('wordIsActive', wordIsActive);
+        formData.append('__RequestVerificationToken', getToken());
+
+        fetch('@Url.Action("AddWord", "Home")', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('A apărut o eroare la adăugarea cuvântului!');
+        });
     }
+
+    function editWordFromButton(button) {
+        try {
+            const id = button.getAttribute('data-word-id');
+            const word = button.getAttribute('data-word-text') || '';
+            const wordCategory = button.getAttribute('data-word-category') || '';
+            const wordDifficulty = button.getAttribute('data-word-difficulty') || '';
+            const wordIsActive = button.getAttribute('data-word-active') === 'true';
+
+            if (!id) {
+                alert('Eroare: ID-ul cuvântului nu a fost găsit!');
+                return;
+            }
+
+            editWord(id, word, wordCategory, wordDifficulty, wordIsActive);
+        } catch (error) {
+            console.error('Eroare la editWordFromButton:', error);
+            alert('A apărut o eroare la deschiderea formularului de editare!');
+        }
+    }
+
+    function editWord(id, word, wordCategory, wordDifficulty, wordIsActive) {
+        try {
+            // Decode HTML entities
+            const decodedWord = (word || '').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+            const decodedCategory = (wordCategory || '').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+            
+            // Convert wordIsActive to boolean if it's a string
+            const isActive = typeof wordIsActive === 'string' 
+                ? wordIsActive.toLowerCase() === 'true' 
+                : Boolean(wordIsActive);
+
+            const editWordIdEl = document.getElementById('editWordId');
+            const editWordEl = document.getElementById('editWord');
+            const editWordCategoryEl = document.getElementById('editWordCategory');
+            const editWordDifficultyEl = document.getElementById('editWordDifficulty');
+            const editWordIsActiveEl = document.getElementById('editWordIsActive');
+
+            if (!editWordIdEl || !editWordEl || !editWordCategoryEl || !editWordDifficultyEl || !editWordIsActiveEl) {
+                alert('Eroare: Formularul de editare nu a fost găsit!');
+                console.error('Elemente lipsă:', {
+                    editWordId: !!editWordIdEl,
+                    editWord: !!editWordEl,
+                    editWordCategory: !!editWordCategoryEl,
+                    editWordDifficulty: !!editWordDifficultyEl,
+                    editWordIsActive: !!editWordIsActiveEl
+                });
+                return;
+            }
+
+            editWordIdEl.value = id || '';
+            editWordEl.value = decodedWord;
+            editWordCategoryEl.value = decodedCategory;
+            editWordDifficultyEl.value = wordDifficulty || '';
+            editWordIsActiveEl.value = isActive ? 'true' : 'false';
+
+            const modalElement = document.getElementById('editWordModal');
+            if (!modalElement) {
+                alert('Eroare: Modalul de editare nu a fost găsit!');
+                return;
+            }
+
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } catch (error) {
+            console.error('Eroare la editWord:', error);
+            alert('A apărut o eroare la deschiderea formularului de editare!');
+        }
+    }
+
+    function saveWord() {
+        const id = document.getElementById('editWordId').value;
+        const word = document.getElementById('editWord').value;
+        const wordCategory = document.getElementById('editWordCategory').value;
+        const wordDifficulty = document.getElementById('editWordDifficulty').value;
+        const wordIsActive = document.getElementById('editWordIsActive').value === 'true';
+
+        if (!word || !wordCategory || !wordDifficulty) {
+            alert('Te rog completează toate câmpurile!');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('word', word);
+        formData.append('wordCategory', wordCategory);
+        formData.append('wordDifficulty', wordDifficulty);
+        formData.append('wordIsActive', wordIsActive);
+        formData.append('__RequestVerificationToken', getToken());
+
+        fetch('@Url.Action("EditWord", "Home")', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editWordModal'));
+        modal.hide();
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('A apărut o eroare la actualizarea cuvântului!');
+        });
+    }
+
+    function deleteWord(id) {
+        if (!confirm('Ești sigur că vrei să ștergi acest cuvânt?')) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('__RequestVerificationToken', getToken());
+
+        fetch('@Url.Action("DeleteWord", "Home")', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('A apărut o eroare la ștergerea cuvântului!');
+        });
+    }
+
+    // Filter functions
+    function filterQuestions() {
+        const category = document.getElementById('filterQuestionCategory').value;
+        const difficulty = document.getElementById('filterQuestionDifficulty').value;
+        const status = document.getElementById('filterQuestionStatus').value;
+        
+        const rows = document.querySelectorAll('#questionsTable tbody tr');
+        rows.forEach(row => {
+            const rowCategory = row.getAttribute('data-category') || '';
+            const rowDifficulty = row.getAttribute('data-difficulty') || '';
+            const rowStatus = row.getAttribute('data-status') || '';
+            
+            const matchCategory = !category || rowCategory === category;
+            const matchDifficulty = !difficulty || rowDifficulty === difficulty;
+            const matchStatus = !status || rowStatus === status;
+            
+            if (matchCategory && matchDifficulty && matchStatus) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function filterWords() {
+        const category = document.getElementById('filterWordCategory').value;
+        const difficulty = document.getElementById('filterWordDifficulty').value;
+        const status = document.getElementById('filterWordStatus').value;
+        
+        const rows = document.querySelectorAll('#wordsTable tbody tr');
+        rows.forEach(row => {
+            const rowCategory = row.getAttribute('data-category') || '';
+            const rowDifficulty = row.getAttribute('data-difficulty') || '';
+            const rowStatus = row.getAttribute('data-status') || '';
+            
+            const matchCategory = !category || rowCategory === category;
+            const matchDifficulty = !difficulty || rowDifficulty === difficulty;
+            const matchStatus = !status || rowStatus === status;
+            
+            if (matchCategory && matchDifficulty && matchStatus) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function clearQuestionFilters() {
+        document.getElementById('filterQuestionCategory').value = '';
+        document.getElementById('filterQuestionDifficulty').value = '';
+        document.getElementById('filterQuestionStatus').value = '';
+        filterQuestions();
+    }
+
+    function clearWordFilters() {
+        document.getElementById('filterWordCategory').value = '';
+        document.getElementById('filterWordDifficulty').value = '';
+        document.getElementById('filterWordStatus').value = '';
+        filterWords();
+    }
+
+    // Category management functions
+    function editCategory(id, currentCategory, type) {
+        document.getElementById('editCategoryId').value = id;
+        document.getElementById('editCategoryType').value = type;
+        document.getElementById('editCategoryName').value = currentCategory;
+        
+        // Populate existing categories dropdown
+        const select = document.getElementById('existingCategorySelect');
+        select.innerHTML = '<option value="">Selectează o categorie existentă</option>';
+        
+        const badges = document.querySelectorAll(`.category-badge[data-${type}-id]`);
+        const categories = new Set();
+        badges.forEach(badge => {
+            const cat = badge.textContent.trim();
+            if (cat && cat !== currentCategory) {
+                categories.add(cat);
+            }
+        });
+        
+        Array.from(categories).sort().forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            select.appendChild(option);
+        });
+        
+        const modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+        modal.show();
+    }
+
+    function saveCategory() {
+        const id = document.getElementById('editCategoryId').value;
+        const type = document.getElementById('editCategoryType').value;
+        const newCategory = document.getElementById('editCategoryName').value.trim();
+        
+        if (!newCategory) {
+            alert('Te rog introdu o categorie!');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('category', newCategory);
+        formData.append('type', type);
+        formData.append('__RequestVerificationToken', getToken());
+        
+        const endpoint = type === 'question' ? '@Url.Action("UpdateQuestionCategory", "Home")' : '@Url.Action("UpdateWordCategory", "Home")';
+        
+        fetch(endpoint, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editCategoryModal'));
+                modal.hide();
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('A apărut o eroare la actualizarea categoriei!');
+        });
+    }
+
+    function showCategoryManager(type) {
+        window.currentCategoryType = type;
+        loadCategories(type);
+        const modal = new bootstrap.Modal(document.getElementById('categoryManagerModal'));
+        modal.show();
+    }
+
+    function loadCategories(type) {
+        const categoriesList = document.getElementById('categoriesList');
+        categoriesList.innerHTML = '<div class="w-100 text-center"><i class="fas fa-spinner fa-spin"></i> Se încarcă...</div>';
+        
+        // Get all categories from the filter dropdown (which contains all categories from server)
+        const filterSelect = type === 'questions' ? document.getElementById('filterQuestionCategory') : document.getElementById('filterWordCategory');
+        const categories = new Set();
+        
+        // Collect from filter dropdown (has all categories from server)
+        if (filterSelect) {
+            Array.from(filterSelect.options).forEach(option => {
+                if (option.value && option.value.trim() !== '') {
+                    categories.add(option.value.trim());
+                }
+            });
+        }
+        
+        // Also collect from table rows (in case some categories are not in dropdown yet)
+        const selector = type === 'questions' ? '#questionsTable' : '#wordsTable';
+        const rows = document.querySelectorAll(`${selector} tbody tr`);
+        
+        rows.forEach(row => {
+            // Check all rows, even if hidden by filters
+            const categoryBadge = row.querySelector('.category-badge');
+            if (categoryBadge) {
+                const category = categoryBadge.textContent.trim();
+                if (category) {
+                    categories.add(category);
+                }
+            }
+        });
+        
+        // Also collect from form dropdowns
+        const formSelects = [];
+        if (type === 'questions') {
+            formSelects.push(document.getElementById('questionCategory'));
+            formSelects.push(document.getElementById('editQuestionCategory'));
+        } else {
+            formSelects.push(document.getElementById('wordCategory'));
+            formSelects.push(document.getElementById('editWordCategory'));
+        }
+        
+        formSelects.forEach(select => {
+            if (select) {
+                Array.from(select.options).forEach(option => {
+                    if (option.value && option.value.trim() !== '') {
+                        categories.add(option.value.trim());
+                    }
+                });
+            }
+        });
+        
+        if (categories.size === 0) {
+            categoriesList.innerHTML = '<div class="w-100 text-muted">Nu există categorii încă.</div>';
+            return;
+        }
+        
+        categoriesList.innerHTML = '';
+        Array.from(categories).sort().forEach(category => {
+            const badge = document.createElement('div');
+            badge.className = 'badge bg-primary p-3 d-flex align-items-center gap-2';
+            badge.style.cssText = 'font-size: 1rem; cursor: pointer;';
+            // Escape quotes for onclick
+            const escapedCategory = category.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            badge.innerHTML = `
+                <span>${category}</span>
+                <button class="btn btn-sm btn-light p-1" onclick="renameCategory('${escapedCategory}', '${type}')" title="Redenumește">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger p-1" onclick="deleteCategory('${escapedCategory}', '${type}')" title="Șterge">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            categoriesList.appendChild(badge);
+        });
+    }
+
+    function addNewCategory() {
+        try {
+            const newCategoryName = document.getElementById('newCategoryName').value.trim();
+            if (!newCategoryName) {
+                alert('Te rog introdu un nume pentru categorie!');
+                return;
+            }
+            
+            if (!window.currentCategoryType) {
+                alert('Eroare: Tipul categoriei nu este setat!');
+                return;
+            }
+            
+            // Check if category already exists in dropdowns
+            const selector = window.currentCategoryType === 'questions' ? '#questionCategory' : '#wordCategory';
+            const formSelect = document.querySelector(selector);
+            if (formSelect) {
+                const existingOptions = Array.from(formSelect.options).map(opt => opt.value.trim());
+                if (existingOptions.includes(newCategoryName)) {
+                    alert('Această categorie există deja!');
+                    return;
+                }
+            }
+            
+            // Check if category already exists in list
+            const existingCategories = Array.from(document.querySelectorAll('#categoriesList .badge span')).map(s => s.textContent.trim());
+            if (existingCategories.includes(newCategoryName)) {
+                alert('Această categorie există deja în listă!');
+                return;
+            }
+            
+            // Add to dropdowns immediately
+            if (typeof updateCategoryDropdowns === 'function') {
+                updateCategoryDropdowns(window.currentCategoryType, newCategoryName);
+            } else {
+                console.error('updateCategoryDropdowns function not found!');
+                alert('Eroare: Funcția de actualizare dropdown-uri nu a fost găsită!');
+                return;
+            }
+            
+            // Add to categories list in modal
+            const categoriesList = document.getElementById('categoriesList');
+            if (!categoriesList) {
+                alert('Eroare: Lista de categorii nu a fost găsită!');
+                return;
+            }
+            
+            const badge = document.createElement('div');
+            badge.className = 'badge bg-primary p-3 d-flex align-items-center gap-2';
+            badge.style.cssText = 'font-size: 1rem; cursor: pointer;';
+            // Escape quotes in category name for onclick
+            const escapedCategory = newCategoryName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            badge.innerHTML = `
+                <span>${newCategoryName}</span>
+                <button class="btn btn-sm btn-light p-1" onclick="renameCategory('${escapedCategory}', '${window.currentCategoryType}')" title="Redenumește">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger p-1" onclick="deleteCategory('${escapedCategory}', '${window.currentCategoryType}')" title="Șterge">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            categoriesList.appendChild(badge);
+            
+            // Sort categories
+            const badges = Array.from(categoriesList.children);
+            badges.sort((a, b) => {
+                const textA = a.querySelector('span').textContent.trim();
+                const textB = b.querySelector('span').textContent.trim();
+                return textA.localeCompare(textB);
+            });
+            categoriesList.innerHTML = '';
+            badges.forEach(b => categoriesList.appendChild(b));
+            
+            // Clear input
+            document.getElementById('newCategoryName').value = '';
+            
+            alert(`Categoria "${newCategoryName}" a fost adăugată cu succes! Acum o poți folosi în formulare.`);
+        } catch (error) {
+            console.error('Eroare la addNewCategory:', error);
+            alert('A apărut o eroare la adăugarea categoriei: ' + error.message);
+        }
+    }
+
+    function updateCategoryDropdowns(type, newCategory) {
+        // Update filter dropdowns
+        const filterSelect = type === 'questions' ? document.getElementById('filterQuestionCategory') : document.getElementById('filterWordCategory');
+        if (filterSelect) {
+            const option = document.createElement('option');
+            option.value = newCategory;
+            option.textContent = newCategory;
+            filterSelect.appendChild(option);
+            // Sort options
+            const options = Array.from(filterSelect.options).slice(1).sort((a, b) => a.textContent.localeCompare(b.textContent));
+            filterSelect.innerHTML = '<option value="">Toate categoriile</option>';
+            options.forEach(opt => filterSelect.appendChild(opt));
+        }
+        
+        // Update form dropdowns
+        const formSelects = [];
+        if (type === 'questions') {
+            formSelects.push(document.getElementById('questionCategory'));
+            formSelects.push(document.getElementById('editQuestionCategory'));
+        } else {
+            formSelects.push(document.getElementById('wordCategory'));
+            formSelects.push(document.getElementById('editWordCategory'));
+        }
+        
+        formSelects.forEach(select => {
+            if (select) {
+                const option = document.createElement('option');
+                option.value = newCategory;
+                option.textContent = newCategory;
+                select.appendChild(option);
+                // Sort options
+                const options = Array.from(select.options).slice(1).sort((a, b) => a.textContent.localeCompare(b.textContent));
+                select.innerHTML = '<option value="">Selectează categoria</option>';
+                options.forEach(opt => select.appendChild(opt));
+            }
+        });
+    }
+
+    function renameCategory(oldCategory, type) {
+        const newCategory = prompt(`Redenumește categoria "${oldCategory}" în:`, oldCategory);
+        if (!newCategory || newCategory.trim() === '' || newCategory === oldCategory) {
+            return;
+        }
+        
+        const newCategoryName = newCategory.trim();
+        const selector = type === 'questions' ? '#questionsTable' : '#wordsTable';
+        const rows = document.querySelectorAll(`${selector} tbody tr`);
+        const itemsToUpdate = [];
+        
+        rows.forEach(row => {
+            const categoryBadge = row.querySelector('.category-badge');
+            if (categoryBadge && categoryBadge.textContent.trim() === oldCategory) {
+                const itemId = categoryBadge.getAttribute(`data-${type}-id`);
+                if (itemId) {
+                    itemsToUpdate.push(itemId);
+                }
+            }
+        });
+        
+        // If no items found, just update dropdowns (for new categories that haven't been used yet)
+        if (itemsToUpdate.length === 0) {
+            // Update dropdowns with new category name
+            updateCategoryDropdowns(type, newCategoryName);
+            
+            // Remove old category from dropdowns
+            const filterSelect = type === 'questions' ? document.getElementById('filterQuestionCategory') : document.getElementById('filterWordCategory');
+            if (filterSelect) {
+                const oldOption = Array.from(filterSelect.options).find(opt => opt.value === oldCategory);
+                if (oldOption) oldOption.remove();
+            }
+            
+            const formSelects = [];
+            if (type === 'questions') {
+                formSelects.push(document.getElementById('questionCategory'));
+                formSelects.push(document.getElementById('editQuestionCategory'));
+            } else {
+                formSelects.push(document.getElementById('wordCategory'));
+                formSelects.push(document.getElementById('editWordCategory'));
+            }
+            
+            formSelects.forEach(select => {
+                if (select) {
+                    const oldOption = Array.from(select.options).find(opt => opt.value === oldCategory);
+                    if (oldOption) oldOption.remove();
+                }
+            });
+            
+            // Reload categories list
+            loadCategories(type);
+            alert(`Categoria "${oldCategory}" a fost redenumită în "${newCategoryName}". Categoria va fi folosită când adaugi elemente noi.`);
+            return;
+        }
+        
+        // Update all items with this category
+        updateCategoryForItems(itemsToUpdate, newCategoryName, type, () => {
+            loadCategories(type);
+        });
+    }
+
+    function deleteCategory(category, type) {
+        if (!confirm(`Ești sigur că vrei să ștergi categoria "${category}"?\n\nToate elementele cu această categorie vor primi categoria "General".`)) {
+            return;
+        }
+        
+        const selector = type === 'questions' ? '#questionsTable' : '#wordsTable';
+        const rows = document.querySelectorAll(`${selector} tbody tr`);
+        const itemsToUpdate = [];
+        
+        rows.forEach(row => {
+            const categoryBadge = row.querySelector('.category-badge');
+            if (categoryBadge && categoryBadge.textContent.trim() === category) {
+                const itemId = categoryBadge.getAttribute(`data-${type}-id`);
+                if (itemId) {
+                    itemsToUpdate.push(itemId);
+                }
+            }
+        });
+        
+        if (itemsToUpdate.length === 0) {
+            alert('Nu s-au găsit elemente cu această categorie!');
+            return;
+        }
+        
+        // Set category to "General" for all items
+        updateCategoryForItems(itemsToUpdate, 'General', type, () => {
+            loadCategories(type);
+        });
+    }
+
+    function updateCategoryForItems(itemIds, newCategory, type, callback) {
+        let completed = 0;
+        const total = itemIds.length;
+        
+        if (total === 0) {
+            if (callback) callback();
+            return;
+        }
+        
+        itemIds.forEach(itemId => {
+            const formData = new FormData();
+            formData.append('id', itemId);
+            formData.append('category', newCategory);
+            formData.append('__RequestVerificationToken', getToken());
+            
+            const endpoint = type === 'questions' ? '@Url.Action("UpdateQuestionCategory", "Home")' : '@Url.Action("UpdateWordCategory", "Home")';
+            
+            fetch(endpoint, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                completed++;
+                if (completed === total) {
+                    if (data.success) {
+                        alert(`Categoria a fost actualizată pentru ${total} element(e)!`);
+                        if (callback) callback();
+                        location.reload();
+                    } else {
+                        alert('A apărut o eroare la actualizarea categoriilor!');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                completed++;
+                if (completed === total) {
+                    alert('A apărut o eroare la actualizarea categoriilor!');
+                }
+            });
+        });
+    }
+
+    // Update chevron icons when sections collapse/expand
+    document.addEventListener('DOMContentLoaded', function() {
+        const questionSection = document.getElementById('questionSwapSection');
+        const wordSection = document.getElementById('wordHiddenSection');
+        
+        if (questionSection) {
+            const questionHeader = questionSection.previousElementSibling.querySelector('.collapse-icon');
+            questionSection.addEventListener('show.bs.collapse', function() {
+                if (questionHeader) {
+                    questionHeader.classList.remove('fa-chevron-down');
+                    questionHeader.classList.add('fa-chevron-up');
+                }
+            });
+            questionSection.addEventListener('hide.bs.collapse', function() {
+                if (questionHeader) {
+                    questionHeader.classList.remove('fa-chevron-up');
+                    questionHeader.classList.add('fa-chevron-down');
+                }
+            });
+        }
+        
+        if (wordSection) {
+            const wordHeader = wordSection.previousElementSibling.querySelector('.collapse-icon');
+            wordSection.addEventListener('show.bs.collapse', function() {
+                if (wordHeader) {
+                    wordHeader.classList.remove('fa-chevron-down');
+                    wordHeader.classList.add('fa-chevron-up');
+                }
+            });
+            wordSection.addEventListener('hide.bs.collapse', function() {
+                if (wordHeader) {
+                    wordHeader.classList.remove('fa-chevron-up');
+                    wordHeader.classList.add('fa-chevron-down');
+                }
+            });
+        }
+    });
 </script>

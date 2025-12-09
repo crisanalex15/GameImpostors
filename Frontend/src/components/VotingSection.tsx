@@ -169,7 +169,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({
       eliminatedPlayer: mostVotedPlayer,
       wasImpostor: mostVotedPlayer.isImpostor,
       crewmatePoints: mostVotedPlayer.isImpostor ? 100 : 0, // Crewmates get 100 if impostor was voted
-      impostorPoints: mostVotedPlayer.isImpostor ? 50 : 100, // Impostor gets 50 (guessing) if voted, or 100 if crewmate was voted
+      impostorPoints: mostVotedPlayer.isImpostor ? 0 : 100, // Impostor gets 0 if voted, 100 if crewmate was voted
     };
   };
 

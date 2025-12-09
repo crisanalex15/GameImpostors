@@ -15,6 +15,8 @@ const AnswersReviewPage: React.FC<AnswersReviewPageProps> = ({
   currentUserId,
   onStateUpdate,
 }) => {
+  // keep prop for callers, even if not used explicitly
+  void currentUserId;
   const [countdown, setCountdown] = useState(5);
   const [isStartingVoting, setIsStartingVoting] = useState(false);
 
@@ -25,12 +27,6 @@ const AnswersReviewPage: React.FC<AnswersReviewPageProps> = ({
       return () => clearTimeout(timer);
     }
   }, [countdown]);
-
-  // Find current player's answer
-  const currentPlayer = players.find((p) => p.userId === currentUserId);
-  const currentPlayerAnswer = round.answers.find(
-    (a) => a.playerId === currentPlayer?.id
-  );
 
   const handleStartVoting = async () => {
     if (isStartingVoting) return;
@@ -51,9 +47,6 @@ const AnswersReviewPage: React.FC<AnswersReviewPageProps> = ({
 
   const getPlayerUserName = (playerId: string) => {
     const player = players.find((p) => p.id === playerId);
-    if (currentUserId && player && player.userId === currentUserId) {
-      return "Tu";
-    }
     return player?.userName || `Jucător ${playerId.slice(-4)}`;
   };
 
@@ -90,32 +83,41 @@ const AnswersReviewPage: React.FC<AnswersReviewPageProps> = ({
               <p style={styles.questionText}>{round.questionText}</p>
             </div>
 
-            {/* Show only current player's answer */}
-            {currentPlayerAnswer ? (
+            {/* Show all answers (Question Swap review) */}
+            {round.answers && round.answers.length > 0 ? (
               <div style={styles.answersContainer}>
-                <div style={styles.answerCard}>
-                  <div style={styles.answerHeader}>
-                    <span style={styles.playerName}>
-                      {getPlayerIcon(currentPlayer!) && (
-                        <span style={{ marginRight: "5px" }}>
-                          {getPlayerIcon(currentPlayer!)}
+                {round.answers.map((answer) => {
+                  const player = players.find((p) => p.id === answer.playerId);
+                  const isCurrentUser =
+                    currentUserId && player && player.userId === currentUserId;
+                  return (
+                    <div
+                      key={answer.id}
+                      style={{
+                        ...styles.answerCard,
+                        ...(isCurrentUser ? styles.currentUserAnswer : {}),
+                      }}
+                    >
+                      <div style={styles.answerHeader}>
+                        <span style={styles.playerName}>
+                          {player && getPlayerIcon(player) && (
+                            <span style={{ marginRight: "5px" }}>
+                              {getPlayerIcon(player)}
+                            </span>
+                          )}
+                          {getPlayerUserName(answer.playerId)}
                         </span>
+                      </div>
+                      <div style={styles.answerText}>{answer.value}</div>
+                      {answer.isEdited && (
+                        <div style={styles.editedLabel}>(editat)</div>
                       )}
-                      {getPlayerUserName(currentPlayerAnswer.playerId)}
-                    </span>
-                  </div>
-                  <div style={styles.answerText}>
-                    {currentPlayerAnswer.value}
-                  </div>
-                  {currentPlayerAnswer.isEdited && (
-                    <div style={styles.editedLabel}>(editat)</div>
-                  )}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
-              <div style={styles.noAnswerMessage}>
-                Nu ai trimis niciun răspuns.
-              </div>
+              <div style={styles.noAnswerMessage}>Nu există răspunsuri.</div>
             )}
 
             {/* Button to start voting */}
@@ -199,8 +201,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "#333",
   },
   currentUserAnswer: {
-    border: "3px solid #ffc107",
-    background: "rgba(255, 193, 7, 0.1)",
+    border: "2px solid #f5576c",
   },
   answerHeader: {
     display: "flex",
