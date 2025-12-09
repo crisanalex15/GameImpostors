@@ -471,6 +471,7 @@ namespace Backend.Services.Game
         {
             return await _context.Rounds
                 .Include(r => r.Game)
+                    .ThenInclude(g => g.Players)
                 .Include(r => r.Question)
                 .Include(r => r.WordHidden)
                 .Include(r => r.Answers)
@@ -484,6 +485,7 @@ namespace Backend.Services.Game
         {
             return await _context.Rounds
                 .Include(r => r.Game)
+                    .ThenInclude(g => g.Players)
                 .Include(r => r.Question)
                 .Include(r => r.WordHidden)
                 .Include(r => r.Answers)

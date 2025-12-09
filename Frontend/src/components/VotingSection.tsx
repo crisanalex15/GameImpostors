@@ -86,13 +86,8 @@ const VotingSection: React.FC<VotingSectionProps> = ({
   const canGuessWord = gameType === GameType.WordHidden;
 
   const getPlayerName = (playerId: string) => {
-    // Găsește jucătorul în listă pentru a verifica dacă e utilizatorul curent
     const player = players.find((p) => p.id === playerId);
-
-    if (currentUserId && player && player.userId === currentUserId) {
-      return "Tu";
-    }
-    return `Jucător ${playerId.slice(-4)}`;
+    return player?.userName || `Jucător ${playerId.slice(-4)}`;
   };
 
   const isCurrentUserEliminatedImpostor = () => {
@@ -112,7 +107,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({
 
   const getPlayerIcon = (player: PlayerResponse) => {
     if (player.isEliminated) return "💀";
-    return "👤";
+    return "";
   };
 
   const getReadyForNextRoundCount = () => {
@@ -185,7 +180,15 @@ const VotingSection: React.FC<VotingSectionProps> = ({
   const eligiblePlayers = players.filter(canVoteForPlayer);
 
   return (
-    <div className="card">
+    <div
+      className="card"
+      style={{
+        borderTopLeftRadius: "0px",
+        borderTopRightRadius: "0px",
+        borderBottomLeftRadius: "12px",
+        borderBottomRightRadius: "12px",
+      }}
+    >
       <div className="game-status">
         <h2>Faza de Votare</h2>
         <p>Cine crezi că e impostorul?</p>
@@ -225,13 +228,21 @@ const VotingSection: React.FC<VotingSectionProps> = ({
                     style={{ marginRight: "10px" }}
                   />
                   <div>
-                    <div style={{ fontSize: "1.5rem", marginBottom: "5px" }}>
-                      {getPlayerIcon(player)}
-                    </div>
-                    <div style={{ fontWeight: "bold" }}>
+                    <div style={{ fontWeight: "bold", fontSize: "1.1rem" }}>
+                      {getPlayerIcon(player) && (
+                        <span style={{ marginRight: "5px" }}>
+                          {getPlayerIcon(player)}
+                        </span>
+                      )}
                       {getPlayerUserName(player.id)}
                     </div>
-                    <div style={{ fontSize: "0.9rem", color: "#666" }}>
+                    <div
+                      style={{
+                        fontSize: "0.9rem",
+                        color: "#666",
+                        marginTop: "5px",
+                      }}
+                    >
                       Scor: {player.score}
                     </div>
                   </div>
@@ -315,31 +326,51 @@ const VotingSection: React.FC<VotingSectionProps> = ({
         <div
           style={{
             marginTop: "30px",
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            color: "white",
-            padding: "20px",
-            borderRadius: "15px",
-            textAlign: "center",
+            background: "white",
+            color: "#333",
+            padding: "25px",
+            borderRadius: "12px",
+            border: "1px solid #e1e5e9",
           }}
         >
-          <h3 style={{ marginBottom: "20px", fontSize: "1.5rem" }}>
-            🎯 Rezultatele Votului
+          <h3
+            style={{
+              marginBottom: "20px",
+              fontSize: "1.5rem",
+              color: "#333",
+              textAlign: "center",
+            }}
+          >
+            Rezultatele Votului
           </h3>
 
           <div
             style={{
-              background: "rgba(255, 255, 255, 0.2)",
+              background: getScoreInfo()?.eliminatedPlayer.isImpostor
+                ? "rgba(40, 167, 69, 0.1)"
+                : "rgba(220, 53, 69, 0.1)",
               padding: "15px",
               borderRadius: "10px",
               marginBottom: "20px",
+              border: `2px solid ${
+                getScoreInfo()?.eliminatedPlayer.isImpostor
+                  ? "#28a745"
+                  : "#dc3545"
+              }`,
             }}
           >
-            <h4 style={{ marginBottom: "10px" }}>
+            <h4
+              style={{
+                marginBottom: "10px",
+                fontSize: "1.2rem",
+                color: "#333",
+              }}
+            >
               {getScoreInfo()?.eliminatedPlayer.isImpostor
-                ? "👹 Impostor găsit!"
-                : "👤 Crewmate votat (greșit)"}
+                ? "Impostor găsit!"
+                : "Crewmate votat (greșit)"}
             </h4>
-            <p style={{ fontSize: "1.1rem", margin: "0" }}>
+            <p style={{ fontSize: "1rem", margin: "0", color: "#666" }}>
               {getPlayerUserName(getScoreInfo()?.eliminatedPlayer.id || "")} (
               {getScoreInfo()?.eliminatedPlayer.isImpostor
                 ? "Impostor"
@@ -350,13 +381,22 @@ const VotingSection: React.FC<VotingSectionProps> = ({
 
           <div
             style={{
-              background: "rgba(255, 255, 255, 0.2)",
+              background: "#f8f9fa",
               padding: "15px",
               borderRadius: "10px",
               marginBottom: "20px",
+              border: "1px solid #e1e5e9",
             }}
           >
-            <h4 style={{ marginBottom: "15px" }}>🏆 Puncte Acordate</h4>
+            <h4
+              style={{
+                marginBottom: "15px",
+                fontSize: "1.2rem",
+                color: "#333",
+              }}
+            >
+              Puncte Acordate
+            </h4>
             <div
               style={{
                 display: "flex",
@@ -422,7 +462,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({
             </div>
           </div>
 
-          {getScoreInfo()?.wasImpostor && (
+          {getScoreInfo()?.wasImpostor && canGuessWord && (
             <div
               style={{
                 background: "rgba(255, 193, 7, 0.3)",
@@ -431,8 +471,14 @@ const VotingSection: React.FC<VotingSectionProps> = ({
                 border: "2px solid #ffc107",
               }}
             >
-              <h4 style={{ marginBottom: "10px", color: "#ffc107" }}>
-                🎲 Faza Finală - Ghicirea Cuvântului
+              <h4
+                style={{
+                  marginBottom: "10px",
+                  color: "#ffc107",
+                  fontSize: "1.2rem",
+                }}
+              >
+                Faza Finală - Ghicirea Cuvântului
               </h4>
               <p style={{ margin: "0 0 15px 0", fontSize: "1rem" }}>
                 Impostorul votat poate încerca să ghicească cuvântul pentru a
@@ -528,7 +574,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({
                   }}
                 >
                   <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
-                    {guessResult.success ? "✅ Corect!" : "❌ Greșit!"}
+                    {guessResult.success ? "Corect!" : "Greșit!"}
                   </div>
                   <div style={{ fontSize: "1rem", marginTop: "5px" }}>
                     {guessResult.message}
@@ -542,7 +588,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({
                         color: "#ffd700",
                       }}
                     >
-                      +{guessResult.points} puncte! 🎉
+                      +{guessResult.points} puncte!
                     </div>
                   )}
                 </div>
@@ -551,33 +597,20 @@ const VotingSection: React.FC<VotingSectionProps> = ({
           )}
 
           {/* Buton pentru runda următoare */}
-          <div style={{ marginTop: "20px" }}>
+          <div style={{ marginTop: "20px", textAlign: "center" }}>
             <button
               onClick={handleReadyForNextRound}
+              className="btn btn-success"
               style={{
-                padding: "15px 30px",
-                background: "linear-gradient(45deg, #28a745, #20c997)",
-                color: "white",
-                border: "none",
-                borderRadius: "25px",
-                fontSize: "1.1rem",
+                padding: "12px 30px",
+                fontSize: "1rem",
                 fontWeight: "bold",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 15px rgba(40, 167, 69, 0.3)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.05)";
-                e.currentTarget.style.boxShadow =
-                  "0 6px 20px rgba(40, 167, 69, 0.4)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.boxShadow =
-                  "0 4px 15px rgba(40, 167, 69, 0.3)";
+                borderRadius: "8px",
+                width: "auto",
+                minWidth: "200px",
               }}
             >
-              {isReadyForNextRound ? "✓ Gata" : "🎮 Runda Următoare"} (
+              {isReadyForNextRound ? "Gata" : "Runda Următoare"} (
               {getReadyForNextRoundCount().ready}/
               {getReadyForNextRoundCount().total})
             </button>

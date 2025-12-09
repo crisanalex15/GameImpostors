@@ -70,7 +70,7 @@ const LobbyPage: React.FC = () => {
           >
             <div>
               <h1 style={{ color: "#333", marginBottom: "10px" }}>
-                🎮 GameImpostors
+                GameImpostors
               </h1>
               <p style={{ color: "#666", fontSize: "1.1rem" }}>
                 Bine ai venit în lobby,{" "}
@@ -85,7 +85,7 @@ const LobbyPage: React.FC = () => {
 
         <div className="grid grid-2" style={{ marginTop: "40px" }}>
           {/* Create Game */}
-          <div className="card">
+          <div className="card" style={{ marginBottom: 0 }}>
             <h2 style={{ marginBottom: "20px", textAlign: "center" }}>
               Creează Joc Nou
             </h2>
@@ -203,7 +203,7 @@ const LobbyPage: React.FC = () => {
 
           {/* Join Game */}
           {!showCreateForm && (
-            <div className="card">
+            <div className="card" style={{ marginBottom: 0 }}>
               <h2 style={{ marginBottom: "20px", textAlign: "center" }}>
                 Alătură-te la Joc
               </h2>

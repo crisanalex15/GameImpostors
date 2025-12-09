@@ -23,9 +23,7 @@ const PlayerList: React.FC<PlayerListProps> = ({
 
   const getPlayerIcon = (player: PlayerResponse) => {
     if (player.isEliminated) return "💀";
-    if (player.isImpostor && gameState === GameState.Ended) return "👹";
-    if (player.isReady && gameState === GameState.Lobby) return "✅";
-    return "👤";
+    return "";
   };
 
   const getPlayerName = (player: PlayerResponse) => {
@@ -87,7 +85,7 @@ const PlayerList: React.FC<PlayerListProps> = ({
                 transition: "all 0.3s ease",
               }}
             >
-              <div style={{ fontSize: "1.5rem" }}>{icon}</div>
+              {icon && <div style={{ fontSize: "1.5rem", marginRight: "8px" }}>{icon}</div>}
               <div>
                 <div
                   style={{
@@ -112,7 +110,7 @@ const PlayerList: React.FC<PlayerListProps> = ({
                       fontWeight: "bold",
                     }}
                   >
-                    {player.isReady ? "✓ Gata" : "⏳ Nu e gata"}
+                    {player.isReady ? "Gata" : "Nu e gata"}
                   </div>
                 )}
 
@@ -129,8 +127,8 @@ const PlayerList: React.FC<PlayerListProps> = ({
                         }}
                       >
                         {currentRound.hasPlayerAnswered
-                          ? "✓ A răspuns"
-                          : "⏳ Nu a răspuns"}
+                          ? "A răspuns"
+                          : "Nu a răspuns"}
                       </div>
                     )}
                   </div>
@@ -144,7 +142,7 @@ const PlayerList: React.FC<PlayerListProps> = ({
                         fontWeight: "bold",
                       }}
                     >
-                      {player.isImpostor ? "👹 Impostor" : "👤 Crewmate"}
+                      {player.isImpostor ? "Impostor" : "Crewmate"}
                     </div>
                     <div style={{ color: "#666" }}>Scor: {player.score}</div>
                   </div>

@@ -196,14 +196,16 @@ const GamePage: React.FC = () => {
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           backdropFilter: "brightness(0.8)",
           width: "100%",
+          maxWidth: "1000px",
+          margin: "0 auto",
           color: "white",
           padding: "15px",
-          borderRadius: "10px",
-          borderTopLeftRadius: "0px",
-          borderBottomRightRadius: "0px",
+          borderTopLeftRadius: "10px",
+          borderTopRightRadius: "10px",
           borderBottomLeftRadius: "0px",
+          borderBottomRightRadius: "0px",
           position: "relative",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
         }}
       >
         <div
@@ -217,7 +219,7 @@ const GamePage: React.FC = () => {
             <h1
               style={{ fontSize: "1.5rem", marginBottom: "5px", margin: "0" }}
             >
-              🎮 GameImpostors
+              GameImpostors
             </h1>
             <p style={{ fontSize: "0.9rem", margin: "5px 0" }}>
               {gameState.state === GameState.Lobby &&
@@ -228,7 +230,7 @@ const GamePage: React.FC = () => {
               Cod: <strong>{gameState.lobbyCode}</strong>
               {gameState.state === GameState.Game && (
                 <span style={{ marginLeft: "15px" }}>
-                  👥 {gameState.players.length} jucători
+                  {gameState.players.length} jucători
                 </span>
               )}
             </p>
@@ -240,7 +242,7 @@ const GamePage: React.FC = () => {
                   opacity: 0.9,
                 }}
               >
-                👤 {user.userName || user.email?.split("@")[0] || "Utilizator"}
+                {user.userName || user.email?.split("@")[0] || "Utilizator"}
               </p>
             )}
           </div>
@@ -272,7 +274,7 @@ const GamePage: React.FC = () => {
                     isPlayersExpanded ? "Ascunde jucătorii" : "Arată jucătorii"
                   }
                 >
-                  ⬇️
+                  ⬇
                 </button>
               )}
 
@@ -325,7 +327,11 @@ const GamePage: React.FC = () => {
               : "0px",
           overflow: "hidden",
           transition: "max-height 0.3s ease",
-          marginBottom: "0px", // Eliminat margin-ul
+          marginBottom: "0px",
+          width: "100%",
+          maxWidth: "1000px",
+          marginLeft: "auto",
+          marginRight: "auto",
         }}
       >
         <div
@@ -334,9 +340,11 @@ const GamePage: React.FC = () => {
             padding: "15px",
             borderTopLeftRadius: "0px",
             borderTopRightRadius: "0px",
-            margin: "0", // Eliminat orice margin
             borderBottomLeftRadius: "0px",
             borderBottomRightRadius: "0px",
+            margin: "0",
+            width: "100%",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
           }}
         >
           {/* Game Controls */}
@@ -416,6 +424,7 @@ const GamePage: React.FC = () => {
             round={gameState.currentRound}
             players={gameState.players}
             currentUserId={user?.id}
+            onStateUpdate={loadGameState}
           />
         )}
 
@@ -444,15 +453,18 @@ const GamePage: React.FC = () => {
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: "white",
             borderRadius: "15px",
-            border: "2px solid rgba(255, 255, 255, 0.3)",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
             width: "100%",
+            maxWidth: "1000px",
+            margin: "0 auto",
             borderTopLeftRadius: "0px",
             borderTopRightRadius: "0px",
+            borderBottomLeftRadius: "12px",
+            borderBottomRightRadius: "12px",
           }}
         >
           <h2 style={{ marginBottom: "30px", fontSize: "2rem" }}>
-            🏆 Jocul S-a Terminat!
+            Jocul S-a Terminat!
           </h2>
 
           {/* Final Leaderboard */}
@@ -470,12 +482,12 @@ const GamePage: React.FC = () => {
                     margin: "10px 0",
                     background:
                       index === 0
-                        ? "rgba(255, 215, 0, 0.3)"
+                        ? "rgba(102, 126, 234, 0.4)"
                         : "rgba(255, 255, 255, 0.2)",
                     borderRadius: "12px",
                     border:
                       index === 0
-                        ? "2px solid #ffd700"
+                        ? "2px solid rgba(102, 126, 234, 0.8)"
                         : "1px solid rgba(255, 255, 255, 0.3)",
                   }}
                 >
@@ -490,23 +502,10 @@ const GamePage: React.FC = () => {
                       style={{
                         fontSize: "1.5rem",
                         fontWeight: "bold",
-                        color:
-                          index === 0
-                            ? "#ffd700"
-                            : index === 1
-                            ? "#c0c0c0"
-                            : index === 2
-                            ? "#cd7f32"
-                            : "white",
+                        color: "white",
                       }}
                     >
-                      {index === 0
-                        ? "🥇"
-                        : index === 1
-                        ? "🥈"
-                        : index === 2
-                        ? "🥉"
-                        : `${index + 1}.`}
+                      {index + 1}.
                     </div>
                     <div style={{ textAlign: "left" }}>
                       <div style={{ fontWeight: "bold", fontSize: "1.2rem" }}>
@@ -518,7 +517,7 @@ const GamePage: React.FC = () => {
                     style={{
                       fontSize: "1.5rem",
                       fontWeight: "bold",
-                      color: index === 0 ? "#ffd700" : "white",
+                      color: "white",
                     }}
                   >
                     {player.score || 0} pts
@@ -542,7 +541,8 @@ const GamePage: React.FC = () => {
                 style={{
                   padding: "15px 30px",
                   fontSize: "1.1rem",
-                  background: "rgba(40, 167, 69, 0.9)",
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                   color: "white",
                   border: "none",
                   borderRadius: "10px",
@@ -550,14 +550,10 @@ const GamePage: React.FC = () => {
                   fontWeight: "bold",
                   transition: "all 0.3s ease",
                 }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "rgba(40, 167, 69, 1)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "rgba(40, 167, 69, 0.9)")
-                }
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
               >
-                🎮 Meci Nou
+                Meci Nou
               </button>
             )}
             <button
@@ -580,7 +576,7 @@ const GamePage: React.FC = () => {
                 (e.currentTarget.style.background = "rgba(220, 53, 69, 0.9)")
               }
             >
-              🚪 Părăsește Lobby
+              Părăsește Lobby
             </button>
           </div>
         </div>

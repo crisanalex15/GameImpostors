@@ -78,17 +78,17 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
   const getRoundTitle = () => {
     switch (round.state) {
       case RoundState.Waiting:
-        return "🎯 Runda începe...";
+        return "Runda începe...";
       case RoundState.Active:
         return gameType === GameType.WordHidden
-          ? "💬 Discutați și găsiți impostorul!"
-          : "❓ Răspunde la întrebare!";
+          ? "Discutați și găsiți impostorul!"
+          : "Răspunde la întrebare!";
       case RoundState.Voting:
-        return "🗳️ Votează cine crezi că e impostorul!";
+        return "Votează cine crezi că e impostorul!";
       case RoundState.Ended:
-        return "✅ Runda s-a terminat";
+        return "Runda s-a terminat";
       default:
-        return "🎮 Runda";
+        return "Runda";
     }
   };
 
@@ -133,7 +133,12 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
   return (
     round.state === RoundState.Active && (
       <>
-    <div className="card">
+    <div className="card" style={{
+      borderTopLeftRadius: "0px",
+      borderTopRightRadius: "0px",
+      borderBottomLeftRadius: "12px",
+      borderBottomRightRadius: "12px",
+    }}>
       <div className="game-status">
         <h2>{getRoundTitle()}</h2>
             <p
@@ -189,7 +194,6 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
                     color: "white",
                     cursor: "pointer",
                     transition: "all 0.3s ease",
-                    boxShadow: "0 4px 15px rgba(40, 167, 69, 0.3)",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "scale(1.01)";
@@ -417,17 +421,12 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
                       fontWeight: "bold",
                       cursor: "pointer",
                       transition: "all 0.3s ease",
-                      boxShadow: "0 4px 15px rgba(40, 167, 69, 0.3)",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "scale(1.05)";
-                      e.currentTarget.style.boxShadow =
-                        "0 6px 20px rgba(40, 167, 69, 0.4)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.boxShadow =
-                        "0 4px 15px rgba(40, 167, 69, 0.3)";
                     }}
                   >
                     ➡️ Runda Următoare
@@ -451,17 +450,12 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
                           fontWeight: "bold",
                           cursor: "pointer",
                           transition: "all 0.3s ease",
-                          boxShadow: "0 4px 15px rgba(40, 167, 69, 0.3)",
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = "scale(1.05)";
-                          e.currentTarget.style.boxShadow =
-                            "0 6px 20px rgba(40, 167, 69, 0.4)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = "scale(1)";
-                          e.currentTarget.style.boxShadow =
-                            "0 4px 15px rgba(40, 167, 69, 0.3)";
                         }}
                       >
                         🎮 Meci Nou
@@ -482,17 +476,12 @@ const RoundDisplay: React.FC<RoundDisplayProps> = ({
                           fontWeight: "bold",
                           cursor: "pointer",
                           transition: "all 0.3s ease",
-                          boxShadow: "0 4px 15px rgba(220, 53, 69, 0.3)",
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = "scale(1.05)";
-                          e.currentTarget.style.boxShadow =
-                            "0 6px 20px rgba(220, 53, 69, 0.4)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = "scale(1)";
-                          e.currentTarget.style.boxShadow =
-                            "0 4px 15px rgba(220, 53, 69, 0.3)";
                         }}
                       >
                         🚪 Părăsește Lobby

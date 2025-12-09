@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { RoundResponse, PlayerResponse } from "../types/game";
+import { gameApi } from "../services/api";
 
 interface AnswersReviewPageProps {
   round: RoundResponse;
   players: PlayerResponse[];
   currentUserId?: string;
+  onStateUpdate?: () => void;
 }
 
 const AnswersReviewPage: React.FC<AnswersReviewPageProps> = ({
   round,
   players,
   currentUserId,
+  onStateUpdate,
 }) => {
   const [countdown, setCountdown] = useState(5);
+  const [isStartingVoting, setIsStartingVoting] = useState(false);
 
   // Countdown timer - automaticăm countdown-ul
   useEffect(() => {
@@ -21,6 +25,29 @@ const AnswersReviewPage: React.FC<AnswersReviewPageProps> = ({
       return () => clearTimeout(timer);
     }
   }, [countdown]);
+
+  // Find current player's answer
+  const currentPlayer = players.find((p) => p.userId === currentUserId);
+  const currentPlayerAnswer = round.answers.find(
+    (a) => a.playerId === currentPlayer?.id
+  );
+
+  const handleStartVoting = async () => {
+    if (isStartingVoting) return;
+
+    setIsStartingVoting(true);
+    try {
+      await gameApi.startVoting(round.id);
+      if (onStateUpdate) {
+        onStateUpdate();
+      }
+    } catch (err: any) {
+      console.error("Error starting voting:", err);
+      alert(err.response?.data?.message || "Eroare la trecerea la votare");
+    } finally {
+      setIsStartingVoting(false);
+    }
+  };
 
   const getPlayerUserName = (playerId: string) => {
     const player = players.find((p) => p.id === playerId);
@@ -41,7 +68,7 @@ const AnswersReviewPage: React.FC<AnswersReviewPageProps> = ({
         {countdown > 0 ? (
           // Show only countdown during the 5 seconds
           <>
-            <h2 style={styles.title}>⏳ Pregătește-te pentru votare!</h2>
+            <h2 style={styles.title}>Pregătește-te pentru votare!</h2>
             <div style={styles.readySection}>
               <div style={styles.countdownBox}>
                 <div style={styles.countdownNumber}>{countdown}</div>
@@ -50,11 +77,11 @@ const AnswersReviewPage: React.FC<AnswersReviewPageProps> = ({
             </div>
           </>
         ) : (
-          // After countdown, show question, answers, and "Se trece la votare..."
+          // After countdown, show question, current player's answer, and button to start voting
           <>
-            <h2 style={styles.title}>📝 Răspunsurile tuturor jucătorilor</h2>
+            <h2 style={styles.title}>Răspunsul tău</h2>
             <p style={styles.subtitle}>
-              Citește cu atenție răspunsurile și pregătește-te să votezi!
+              Vezi întrebarea corectă și răspunsul tău, apoi treci la votare!
             </p>
 
             {/* Show the question */}
@@ -63,41 +90,46 @@ const AnswersReviewPage: React.FC<AnswersReviewPageProps> = ({
               <p style={styles.questionText}>{round.questionText}</p>
             </div>
 
-            {/* Show all answers */}
-            <div style={styles.answersContainer}>
-              {round.answers.map((answer) => {
-                const player = players.find((p) => p.id === answer.playerId);
-                const isCurrentUser = player?.userId === currentUserId;
-
-                return (
-                  <div
-                    key={answer.id}
-                    style={{
-                      ...styles.answerCard,
-                      ...(isCurrentUser ? styles.currentUserAnswer : {}),
-                    }}
-                  >
-                    <div style={styles.answerHeader}>
-                      <span style={styles.playerName}>
-                        {getPlayerIcon(player!)}{" "}
-                        {getPlayerUserName(answer.playerId)}
-                      </span>
-                      {isCurrentUser && <span style={styles.youBadge}>Tu</span>}
-                    </div>
-                    <div style={styles.answerText}>{answer.value}</div>
-                    {answer.isEdited && (
-                      <div style={styles.editedLabel}>(editat)</div>
-                    )}
+            {/* Show only current player's answer */}
+            {currentPlayerAnswer ? (
+              <div style={styles.answersContainer}>
+                <div style={styles.answerCard}>
+                  <div style={styles.answerHeader}>
+                    <span style={styles.playerName}>
+                      {getPlayerIcon(currentPlayer!) && (
+                        <span style={{ marginRight: "5px" }}>
+                          {getPlayerIcon(currentPlayer!)}
+                        </span>
+                      )}
+                      {getPlayerUserName(currentPlayerAnswer.playerId)}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Show "Se trece la votare..." message */}
-            <div style={styles.readySection}>
-              <div style={styles.transitionMessage}>
-                🗳️ Se trece la votare...
+                  <div style={styles.answerText}>
+                    {currentPlayerAnswer.value}
+                  </div>
+                  {currentPlayerAnswer.isEdited && (
+                    <div style={styles.editedLabel}>(editat)</div>
+                  )}
+                </div>
               </div>
+            ) : (
+              <div style={styles.noAnswerMessage}>
+                Nu ai trimis niciun răspuns.
+              </div>
+            )}
+
+            {/* Button to start voting */}
+            <div style={styles.readySection}>
+              <button
+                onClick={handleStartVoting}
+                disabled={isStartingVoting}
+                style={{
+                  ...styles.voteButton,
+                  ...(isStartingVoting ? styles.buttonDisabled : {}),
+                }}
+              >
+                {isStartingVoting ? "Se trece la votare..." : "Treci la votare"}
+              </button>
             </div>
           </>
         )}
@@ -108,15 +140,18 @@ const AnswersReviewPage: React.FC<AnswersReviewPageProps> = ({
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
-    padding: "20px",
-    maxWidth: "900px",
+    padding: "0",
+    maxWidth: "1000px",
     margin: "0 auto",
+    width: "100%",
   },
   card: {
     background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    borderRadius: "20px",
-    padding: "40px",
-    boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
+    borderTopLeftRadius: "0px",
+    borderTopRightRadius: "0px",
+    borderBottomLeftRadius: "12px",
+    borderBottomRightRadius: "12px",
+    padding: "24px",
     color: "white",
   },
   title: {
@@ -166,11 +201,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   currentUserAnswer: {
     border: "3px solid #ffc107",
     background: "rgba(255, 193, 7, 0.1)",
-    boxShadow: "0 4px 15px rgba(255, 193, 7, 0.3)",
   },
   answerHeader: {
     display: "flex",
-    justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "12px",
   },
@@ -219,7 +252,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 8px 30px rgba(0, 0, 0, 0.3)",
     animation: "pulse 1s infinite",
   },
   countdownText: {
@@ -236,7 +268,32 @@ const styles: { [key: string]: React.CSSProperties } = {
     background: "rgba(255, 255, 255, 0.2)",
     borderRadius: "15px",
     textAlign: "center" as const,
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+  },
+  voteButton: {
+    padding: "12px 24px",
+    fontSize: "16px",
+    fontWeight: "600",
+    borderRadius: "8px",
+    border: "none",
+    background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    color: "white",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    minHeight: "44px",
+    minWidth: "200px",
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+    cursor: "not-allowed",
+  },
+  noAnswerMessage: {
+    fontSize: "18px",
+    color: "rgba(255, 255, 255, 0.8)",
+    textAlign: "center" as const,
+    padding: "20px",
+    background: "rgba(255, 255, 255, 0.1)",
+    borderRadius: "10px",
+    marginBottom: "30px",
   },
 };
 

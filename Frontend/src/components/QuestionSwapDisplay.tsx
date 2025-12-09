@@ -40,7 +40,7 @@ const QuestionSwapDisplay: React.FC<QuestionSwapDisplayProps> = ({
     return (
       <div style={styles.container}>
         <div style={styles.questionCard}>
-          <h2 style={styles.title}>✍️ Scrie răspunsul tău:</h2>
+          <h2 style={styles.title}>Scrie răspunsul tău:</h2>
           <div style={styles.questionBox}>
             <p style={styles.questionText}>{round.questionText}</p>
           </div>
@@ -81,7 +81,7 @@ const QuestionSwapDisplay: React.FC<QuestionSwapDisplayProps> = ({
     return (
       <div style={styles.container}>
         <div style={styles.waitingCard}>
-          <h2 style={styles.title}>⏳ Așteptăm ceilalți jucători...</h2>
+          <h2 style={styles.title}>Așteptăm ceilalți jucători...</h2>
           <p style={styles.waitingText}>
             Ai trimis răspunsul! Așteaptă ca toți jucătorii să răspundă.
           </p>
@@ -95,15 +95,18 @@ const QuestionSwapDisplay: React.FC<QuestionSwapDisplayProps> = ({
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
-    padding: "20px",
-    maxWidth: "800px",
+    padding: "0",
+    maxWidth: "1000px",
     margin: "0 auto",
+    width: "100%",
   },
   questionCard: {
     background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    borderRadius: "15px",
-    padding: "30px",
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3)",
+    borderTopLeftRadius: "0px",
+    borderTopRightRadius: "0px",
+    borderBottomLeftRadius: "12px",
+    borderBottomRightRadius: "12px",
+    padding: "24px",
     color: "white",
   },
   title: {
@@ -145,15 +148,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     minHeight: "100px",
   },
   button: {
-    padding: "15px 30px",
-    fontSize: "18px",
-    fontWeight: "bold",
+    padding: "12px 24px",
+    fontSize: "16px",
+    fontWeight: "600",
     borderRadius: "8px",
     border: "none",
     background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
     color: "white",
     cursor: "pointer",
-    transition: "transform 0.2s, box-shadow 0.2s",
+    transition: "all 0.2s ease",
+    width: "100%",
+    minHeight: "44px",
   },
   buttonDisabled: {
     opacity: 0.5,
@@ -168,10 +173,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   waitingCard: {
     background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-    borderRadius: "15px",
+    borderTopLeftRadius: "0px",
+    borderTopRightRadius: "0px",
+    borderBottomLeftRadius: "12px",
+    borderBottomRightRadius: "12px",
     padding: "40px",
     textAlign: "center" as const,
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3)",
     color: "white",
   },
   waitingText: {

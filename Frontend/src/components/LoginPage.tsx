@@ -62,10 +62,10 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="container">
-      <div className="card" style={{ maxWidth: "400px", margin: "100px auto" }}>
+      <div className="card" style={{ maxWidth: "500px", margin: "0 auto" }}>
         <div className="game-status">
           <h1 style={{ color: "#333", marginBottom: "10px" }}>
-            🎮 GameImpostors
+            GameImpostors
           </h1>
           <p style={{ color: "#666", fontSize: "1.1rem" }}>Autentificare</p>
         </div>

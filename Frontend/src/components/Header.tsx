@@ -36,7 +36,7 @@ const Header: React.FC = () => {
               margin: 0,
             }}
           >
-            🎮 GameImpostors
+            GameImpostors
           </h1>
         </div>
 
@@ -65,7 +65,23 @@ const Header: React.FC = () => {
                   "Utilizator"}
               </span>
             </div>
-            <button className="logout-btn" onClick={handleLogout}>
+            <button 
+              className="logout-btn" 
+              onClick={handleLogout}
+              style={{
+                background: "#dc3545",
+                color: "white",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "20px",
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: "14px",
+                transition: "all 0.3s ease",
+                height: "auto",
+                lineHeight: "1.5",
+              }}
+            >
               Logout
             </button>
           </div>
